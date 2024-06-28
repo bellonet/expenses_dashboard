@@ -5,7 +5,8 @@ import re
 import numpy as np
 import logging
 import plotly.express as px
-from types import SimpleNamespace
+import utils
+from constants import ColumnNames
 
 
 def set_logger():
@@ -13,61 +14,6 @@ def set_logger():
     logger.setLevel(logging.INFO)
     logging.info("Logging test")
     return logger
-
-
-class ColumnNames:
-    DATE = 'date'
-    TEXT = 'text'
-    COST = 'cost'
-
-    @classmethod
-    def as_list(cls):
-        return [cls.DATE, cls.TEXT, cls.COST]
-
-    @classmethod
-    def as_set(cls):
-        return {cls.DATE, cls.TEXT, cls.COST}
-
-    @classmethod
-    def as_str(cls):
-        # Returns column names as a formatted string with single quotes and commas
-        return ", ".join(f"'{name}'" for name in cls.as_list())
-
-
-def str_to_float(value):
-    if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', value):
-        # German format (e.g., -1.000,23 or 1.000,23)
-        value = value.replace('.', '').replace(',', '.')
-    elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', value):
-        # English format (e.g., -1,000.23 or 1,000.23)
-        value = value.replace(',', '')
-    elif re.match(r'^-?\d+(\,\d{2})$', value):
-        # German simple format (e.g., -1000,23 or 1000,23)
-        value = value.replace(',', '.')
-    elif re.match(r'^-?\d+(\.\d{2})$', value):
-        # English simple format (e.g., -1000.23 or 1000.23)
-        value = value
-    return float(value)
-
-
-def col_str_to_float(df, col=ColumnNames.COST):
-    df[col] = df[col].apply(str_to_float)
-    return df
-
-
-def col_str_to_date(df, col=ColumnNames.DATE):
-    df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
-    df[col] = df[col].dt.strftime('%d.%m.%Y')
-    df[col].fillna(method='ffill', inplace=True)    
-    return df
-
-
-def format_df(df):
-    df.reset_index(drop=True, inplace=True)
-    df = df[df[ColumnNames.COST].notna()]
-    df = col_str_to_float(df)
-    df = col_str_to_date(df)
-    return df
 
 
 def read_categories(json_path='categories.json'):
@@ -85,8 +31,8 @@ def read_strs_to_del(json_path='delete_list.json'):
 def add_categories(df, categories_dict):
     for category_name, keywords in categories_dict.items():
         pattern = '|'.join(re.escape(keyword) for keyword in keywords)
-        df['category'] = np.where(df['category'].str.strip() == '', 
-                                  np.where(df['name'].str.contains(pattern, case=False, na=False), 
+        df['category'] = np.where(df['category'].str.strip() == '',
+                                  np.where(df['name'].str.contains(pattern, case=False, na=False),
                                            category_name, df['category']), df['category'])
 
 
@@ -114,13 +60,13 @@ def upload_csvs_to_dfs():
     return all_dfs
 
 
-def load_column_mappings(file_path="column_mappings.json"):
+def load_json(file_path):
     with open(file_path, "r") as file:
         return json.load(file)
 
 
 def auto_rename_columns(df):
-    mappings = load_column_mappings()
+    mappings = load_json(file_path="json/column_mappings.json")
     new_columns = {col: col for col in df.columns}  # Initialize with the original column names
 
     for standard_name, possible_names in mappings.items():
@@ -133,17 +79,6 @@ def auto_rename_columns(df):
     return df
 
 
-def rename_columns_all_dfs(dfs, bank_name):
-    for i, df in enumerate(dfs):
-        dfs[i] = auto_rename_columns(df, bank_name)
-        rename_columns(dfs[i], i)
-    return dfs
-
-
-def display_message(color, message):
-    st.markdown(f"<span style='color: {color};'>{message}</span>", unsafe_allow_html=True)
-
-
 def get_allowed_columns(col, allowed_cols):
     allowed_cols = allowed_cols.copy()
     if col not in allowed_cols:
@@ -151,93 +86,57 @@ def get_allowed_columns(col, allowed_cols):
     return allowed_cols
 
 
-def is_valid_date(date_str):
-    try:
-        pd.to_datetime(date_str, dayfirst=True)
-        return True
-    except ValueError:
-        display_message('red', f"The 'date' column is not in a valid date format.")
-        return False
-
-
-def is_valid_float(float_str):
-    try:
-        # Check for German format (e.g., -1.000,23 or 1.000,23)
-        if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', float_str):
-            return True
-        # Check for English format (e.g., -1,000.23 or 1,000.23)
-        elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', float_str):
-            return True
-        # Check for plain formats (e.g., -1000.23 or 1000.23 or -1000,23 or 1000,23)
-        elif re.match(r'^-?\d+(\.\d{2})$', float_str) or re.match(r'^-?\d+(\,\d{2})$', float_str):
-            return True
-        display_message('red', f"The 'cost' column is not in a valid float format.")
-        return False
-    except ValueError:
-        display_message('red', f"The 'cost' column is not in a valid float format.")
-        return False
-
-
-def check_column_format(df, is_valid_func, col_idx):
-    first_item = df.iloc[0, col_idx]
-    if not is_valid_func(first_item):
-        return False
-    return True
-
-
-def rename_columns(df, idx, container):
-
+def rename_columns(df, idx):
     cols = st.columns(len(df.columns))
     new_columns = []
 
     for i, col in enumerate(df.columns):
         allowed_cols = get_allowed_columns(col, ColumnNames.as_list())
-        
+
         with cols[i]:
             new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
                                    index=allowed_cols.index(col), key=f"{idx}_{col}")
             new_columns.append(new_col)
 
     if len(set(new_columns)) != len(new_columns):
-        display_message('red', "Multiple columns have the same name. Please ensure all column names are unique.")
+        utils.display_message('red',
+                              "Multiple columns have the same name. Please ensure all column names are unique.")
     elif all(name in new_columns for name in ColumnNames.as_list()):
 
-        date_valid = check_column_format(df, 
-                                        is_valid_date, 
-                                        new_columns.index(ColumnNames.DATE))
-        cost_valid = check_column_format(df, 
-                                        is_valid_float, 
-                                        new_columns.index(ColumnNames.COST))
+        date_valid = utils.check_column_format(df, utils.is_valid_date, new_columns.index(ColumnNames.DATE))
+        cost_valid = utils.check_column_format(df, utils.is_valid_float, new_columns.index(ColumnNames.COST))
 
         if date_valid and cost_valid:
             df.columns = new_columns
-            display_message('green', "Looks good!")
+            utils.display_message('green', "Looks good!")
 
     else:
-        display_message('red', f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided.")
+        utils.display_message('red',
+                              f"Please update the column names to include {ColumnNames.as_str()} "
+                              "using the dropdown lists provided.")
 
     st.dataframe(df.head())
 
 
 def rename_columns_all_dfs(dfs, container):
-    clean_dfs = [] 
+    clean_dfs = []
     with container():
         for i, df in enumerate(dfs):
             df = auto_rename_columns(df)
-            rename_columns(df, i, container)  
+            rename_columns(df, i)
             if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
                 clean_df = df[ColumnNames.as_list()]
                 clean_dfs.append(clean_df)
-        return clean_dfs  
+        return clean_dfs
 
-   
+
 def concatenate_dfs(dfs):
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
-        df = format_df(df)
+        df = utils.format_df(df)
         st.dataframe(df)
         logger.info("Successfully concatenated all dataframes")
-        display_message('green', "Done! Formated and concatinated all tables!")
+        utils.display_message('green', "Done! Formated and concatinated all tables!")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')
@@ -245,8 +144,8 @@ def concatenate_dfs(dfs):
 
 logger = set_logger()
 
-categories_dict = read_categories()
-str_to_del = read_strs_to_del()
+# categories_dict = read_categories()
+# str_to_del = read_strs_to_del()
 
 set_st()
 all_dfs = upload_csvs_to_dfs()
@@ -257,7 +156,6 @@ if all_dfs:
         placeholder.empty()
         df = concatenate_dfs(valid_dfs)
 
-
         # df = reorganize_df(df)
         # add_categories(df, categories_dict)
         # df = delete_rows(df, str_to_del)
@@ -266,25 +164,24 @@ if all_dfs:
         # if not df.empty:
         #     min_date = df['date'].min().date()  # Convert Pandas Timestamp to Python date
         #     max_date = df['date'].max().date()  # Convert Pandas Timestamp to Python date
-            
+
         #     # Create a date range selector
         #     date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
-            
+
         #     if len(date_range) == 2:
         #         start_date, end_date = date_range
         #         # Convert Python date to Pandas Timestamp for comparison
         #         start_date = pd.Timestamp(start_date)
         #         end_date = pd.Timestamp(end_date)
-                
+
         #         # Filter the DataFrame based on the selected date range
         #         filtered_df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
         #     else:
         #         filtered_df = df 
 
-
         #     st.dataframe(filtered_df.head(10))
         #     #st.dataframe(df[df.category=='sports_equipment'].head(30))
-            
+
         #     df_grouped = filtered_df.groupby('category')['cost'].sum().reset_index()
         #     df_grouped['cost'] = df_grouped['cost'].abs()  
 
@@ -299,7 +196,7 @@ if all_dfs:
         #             height=1000,  # Increase the height
         #             hole=0.4  # Make it a donut chart for better space utilization
         #         )
-                
+
         #         # Update the layout to show values and percentages
         #         fig.update_traces(textinfo='label+percent', insidetextorientation='radial', 
         #                           texttemplate='%{label}<br>%{value:.2f}€  -  %{percent}')
@@ -316,7 +213,7 @@ if all_dfs:
         #                 x=0.5
         #             )
         #         )
-                
+
         #         st.plotly_chart(fig)
         #     else:
         #         st.write("No valid data to plot.")
@@ -336,7 +233,7 @@ if all_dfs:
         #             height=600,
         #             text='cost'
         #         )
-                
+
         #         # Improve the layout
         #         fig.update_layout(
         #             xaxis_title='Month',
@@ -345,7 +242,7 @@ if all_dfs:
         #             xaxis={'type': 'category'},  # This ensures the x-axis treats months as discrete categories
         #             legend_title='Categories'
         #         )
-                
+
         #         # Display the bar chart in Streamlit
         #         st.plotly_chart(fig)
         #     else:

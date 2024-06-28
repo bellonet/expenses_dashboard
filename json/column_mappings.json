@@ -1,0 +1,20 @@
+{
+  "date": [
+    "Buchungstag",
+    "Datum",
+    "Booking Date",
+    "Wertstellungsdatum"
+  ],
+  "cost": [
+    "Umsatz in EUR",
+    "Betrag",
+    "Amount",
+    "Soll/Haben"
+  ],
+  "text": [
+    "Buchungstext",
+    "Verwendungszweck",
+    "Description",
+    "Zahlungsgrund"
+  ]
+}
