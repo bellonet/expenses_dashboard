@@ -108,36 +108,104 @@ def upload_csvs_to_dfs():
     return all_dfs
 
 
+# def rename_columns(df, idx):
+#     with st.container():
+#         cols = st.columns(len(df.columns))
+#         new_columns = []
+#         for i, col in enumerate(df.columns):
+#             # Ensure the current column name is in the allowed list and set as default
+#             allowed_cols = ColumnNames.as_list().copy()
+#             if col not in allowed_cols:
+#                 allowed_cols.append(col)
+#             with cols[i]:
+#                 new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
+#                                        index=allowed_cols.index(col), key=f"{idx}_{col}")
+#                 new_columns.append(new_col)
+        
+#         # Check for unique column names
+#         if len(set(new_columns)) != len(new_columns):
+#             st.markdown(f"<span style='color: red;'>' \
+#                 f'Please update the column names to include {ColumnNames.as_str()}  using the dropdown lists provided. ' \
+#                 f'Ensure all column names are unique.</span>", unsafe_allow_html=True)
+#             st.markdown("<span style='color: orange;'>" \
+#                 f"Warning: Multiple columns have the same name. Please ensure all column names are unique.</span>", unsafe_allow_html=True)
+#         elif all(name in new_columns for name in ColumnNames.as_list()):
+#             df.columns = new_columns
+#             st.markdown("<span style='color: green;'>Looks good!</span>", unsafe_allow_html=True)
+#         else:
+#             st.markdown(f"<span style='color: red;'>"
+#                 f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided. " \
+#                 f"Ensure all column names are unique.</span>", unsafe_allow_html=True)
+#         st.dataframe(df.head())
+
+
+def display_message(color, message):
+    st.markdown(f"<span style='color: {color};'>{message}</span>", unsafe_allow_html=True)
+
+
+def get_allowed_columns(col, allowed_cols):
+    allowed_cols = allowed_cols.copy()
+    if col not in allowed_cols:
+        allowed_cols.append(col)
+    return allowed_cols
+
+
+def is_valid_date(date_str):
+    try:
+        pd.to_datetime(date_str, dayfirst=True)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_float(float_str):
+    try:
+        float(float_str.replace(',', '.'))
+        return True
+    except ValueError:
+        return False
+
+
 def rename_columns(df, idx):
     with st.container():
         cols = st.columns(len(df.columns))
         new_columns = []
+
         for i, col in enumerate(df.columns):
-            # Ensure the current column name is in the allowed list and set as default
-            allowed_cols = ColumnNames.as_list().copy()
-            if col not in allowed_cols:
-                allowed_cols.append(col)
+            allowed_cols = get_allowed_columns(col, ColumnNames.as_list())
+            
             with cols[i]:
                 new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
                                        index=allowed_cols.index(col), key=f"{idx}_{col}")
                 new_columns.append(new_col)
-        
-        # Check for unique column names
-        if len(set(new_columns)) != len(new_columns):
-            st.markdown(f"<span style='color: red;'>' \
-                f'Please update the column names to include {ColumnNames.as_str()}  using the dropdown lists provided. ' \
-                f'Ensure all column names are unique.</span>", unsafe_allow_html=True)
-            st.markdown("<span style='color: orange;'>" \
-                f"Warning: Multiple columns have the same name. Please ensure all column names are unique.</span>", unsafe_allow_html=True)
-        elif all(name in new_columns for name in ColumnNames.as_list()):
-            df.columns = new_columns
-            st.markdown("<span style='color: green;'>Looks good!</span>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<span style='color: red;'>"
-                f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided. " \
-                f"Ensure all column names are unique.</span>", unsafe_allow_html=True)
-        st.dataframe(df.head())
 
+        if len(set(new_columns)) != len(new_columns):
+            display_message('red', "Multiple columns have the same name. Please ensure all column names are unique.")
+        elif all(name in new_columns for name in ColumnNames.as_list()):
+
+            # Check date column format
+            date_idx = new_columns.index(ColumnNames.DATE)
+            date_column = df.iloc[0, date_idx]
+            date_valid = is_valid_date(date_column)
+
+            # Check cost column format
+            cost_idx = new_columns.index(ColumnNames.COST)
+            cost_column = df.iloc[0, cost_idx]
+            cost_valid = is_valid_float(cost_column)
+
+            if not date_valid:
+                display_message('red', f"The date column '{ColumnNames.DATE}' is not in a valid date format.")
+            if not cost_valid:
+                display_message('red', f"The cost column '{ColumnNames.COST}' is not in a valid float format.")
+            
+            if date_valid and cost_valid:
+                df.columns = new_columns
+                display_message('green', "Looks good!")
+
+        else:
+            display_message('red', f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided.")
+
+        st.dataframe(df.head())
 
 
 def rename_columns_all_dfs(dfs):
