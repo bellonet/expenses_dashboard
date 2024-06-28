@@ -188,58 +188,58 @@ def check_column_format(df, is_valid_func, col_idx):
     return True
 
 
-def rename_columns(df, idx):
-    with st.container():
-        cols = st.columns(len(df.columns))
-        new_columns = []
+def rename_columns(df, idx, container):
 
-        for i, col in enumerate(df.columns):
-            allowed_cols = get_allowed_columns(col, ColumnNames.as_list())
-            
-            with cols[i]:
-                new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
-                                       index=allowed_cols.index(col), key=f"{idx}_{col}")
-                new_columns.append(new_col)
+    cols = st.columns(len(df.columns))
+    new_columns = []
 
-        if len(set(new_columns)) != len(new_columns):
-            display_message('red', "Multiple columns have the same name. Please ensure all column names are unique.")
-        elif all(name in new_columns for name in ColumnNames.as_list()):
+    for i, col in enumerate(df.columns):
+        allowed_cols = get_allowed_columns(col, ColumnNames.as_list())
+        
+        with cols[i]:
+            new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
+                                   index=allowed_cols.index(col), key=f"{idx}_{col}")
+            new_columns.append(new_col)
 
-            date_valid = check_column_format(df, 
-                                            is_valid_date, 
-                                            new_columns.index(ColumnNames.DATE))
-            cost_valid = check_column_format(df, 
-                                            is_valid_float, 
-                                            new_columns.index(ColumnNames.COST))
+    if len(set(new_columns)) != len(new_columns):
+        display_message('red', "Multiple columns have the same name. Please ensure all column names are unique.")
+    elif all(name in new_columns for name in ColumnNames.as_list()):
 
-            if date_valid and cost_valid:
-                df.columns = new_columns
-                display_message('green', "Looks good!")
+        date_valid = check_column_format(df, 
+                                        is_valid_date, 
+                                        new_columns.index(ColumnNames.DATE))
+        cost_valid = check_column_format(df, 
+                                        is_valid_float, 
+                                        new_columns.index(ColumnNames.COST))
 
-        else:
-            display_message('red', f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided.")
+        if date_valid and cost_valid:
+            df.columns = new_columns
+            display_message('green', "Looks good!")
 
-        st.dataframe(df.head())
+    else:
+        display_message('red', f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided.")
+
+    st.dataframe(df.head())
 
 
-def rename_columns_all_dfs(dfs):
-    clean_dfs = []  # Initialize the list to store cleaned DataFrames
-    for i, df in enumerate(dfs):
-        df = auto_rename_columns(df)  # Automatically rename columns
-        rename_columns(df, i)  # Allow user to rename columns if needed
-        # Check if DataFrame has the required columns and unique names
-        if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
-            clean_df = df[ColumnNames.as_list()]
-            clean_dfs.append(clean_df)
-    return clean_dfs
+def rename_columns_all_dfs(dfs, container):
+    clean_dfs = [] 
+    with container():
+        for i, df in enumerate(dfs):
+            df = auto_rename_columns(df)
+            rename_columns(df, i, container)  
+            if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
+                clean_df = df[ColumnNames.as_list()]
+                clean_dfs.append(clean_df)
+        return clean_dfs  
 
-    
-
+   
 def concatenate_dfs(dfs):
     if len(dfs) > 0:
         final_df = pd.concat(dfs, ignore_index=True)
         st.dataframe(final_df)
         logger.info("Successfully concatenated all dataframes")
+        display_message('green', "Done! Formated and concatinated all tables!")
         return final_df
     else:
         st.error('No valid DataFrames to concatenate.')
@@ -252,11 +252,12 @@ str_to_del = read_strs_to_del()
 
 set_st()
 all_dfs = upload_csvs_to_dfs()
+placeholder = st.empty()
 if all_dfs:
-    valid_dfs = rename_columns_all_dfs(all_dfs)
+    valid_dfs = rename_columns_all_dfs(all_dfs, placeholder.container)
     if len(valid_dfs) == len(all_dfs):
+        placeholder.empty()
         df = concatenate_dfs(valid_dfs)
-        st.markdown("<span style='color: green;'>Done</span>", unsafe_allow_html=True)
 
 
         # df = reorganize_df(df)
