@@ -159,6 +159,7 @@ def is_valid_date(date_str):
         pd.to_datetime(date_str, dayfirst=True)
         return True
     except ValueError:
+        display_message('red', f"The 'date' column is not in a valid date format.")
         return False
 
 
@@ -173,9 +174,18 @@ def is_valid_float(float_str):
         # Check for plain formats (e.g., -1000.23 or 1000.23 or -1000,23 or 1000,23)
         elif re.match(r'^-?\d+(\.\d{2})$', float_str) or re.match(r'^-?\d+(\,\d{2})$', float_str):
             return True
+        display_message('red', f"The 'cost' column is not in a valid float format.")
         return False
     except ValueError:
+        display_message('red', f"The 'cost' column is not in a valid float format.")
         return False
+
+
+def check_column_format(df, is_valid_func, col_idx):
+    first_item = df.iloc[0, col_idx]
+    if not is_valid_func(first_item):
+        return False
+    return True
 
 
 def rename_columns(df, idx):
@@ -195,21 +205,13 @@ def rename_columns(df, idx):
             display_message('red', "Multiple columns have the same name. Please ensure all column names are unique.")
         elif all(name in new_columns for name in ColumnNames.as_list()):
 
-            # Check date column format
-            date_idx = new_columns.index(ColumnNames.DATE)
-            date_column = df.iloc[0, date_idx]
-            date_valid = is_valid_date(date_column)
+            date_valid = check_column_format(df, 
+                                            is_valid_date, 
+                                            new_columns.index(ColumnNames.DATE))
+            cost_valid = check_column_format(df, 
+                                            is_valid_float, 
+                                            new_columns.index(ColumnNames.COST))
 
-            # Check cost column format
-            cost_idx = new_columns.index(ColumnNames.COST)
-            cost_column = df.iloc[0, cost_idx]
-            cost_valid = is_valid_float(cost_column)
-
-            if not date_valid:
-                display_message('red', f"The date column '{ColumnNames.DATE}' is not in a valid date format.")
-            if not cost_valid:
-                display_message('red', f"The cost column '{ColumnNames.COST}' is not in a valid float format.")
-            
             if date_valid and cost_valid:
                 df.columns = new_columns
                 display_message('green', "Looks good!")
@@ -218,17 +220,6 @@ def rename_columns(df, idx):
             display_message('red', f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided.")
 
         st.dataframe(df.head())
-
-
-# def rename_columns_all_dfs(dfs):
-#     clean_dfs = []  # Initialize the list to store cleaned DataFrames
-#     for i, df in enumerate(dfs):
-#         rename_columns(df, i)
-#         # Check if DataFrame has the required columns and unique names
-#         if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
-#             clean_df = df[ColumnNames.as_list()]
-#             clean_dfs.append(clean_df)
-#     return clean_dfs
 
 
 def rename_columns_all_dfs(dfs):
