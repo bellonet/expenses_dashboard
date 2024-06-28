@@ -88,7 +88,6 @@ def delete_rows(df, to_del_list):
     return df[~df['name'].str.contains(pattern, case=False, na=False)]
 
 
-
 def set_st():
     st.set_page_config(layout="wide")
     st.title('Expenses Analyzer - Comdirect')
@@ -108,35 +107,30 @@ def upload_csvs_to_dfs():
     return all_dfs
 
 
-# def rename_columns(df, idx):
-#     with st.container():
-#         cols = st.columns(len(df.columns))
-#         new_columns = []
-#         for i, col in enumerate(df.columns):
-#             # Ensure the current column name is in the allowed list and set as default
-#             allowed_cols = ColumnNames.as_list().copy()
-#             if col not in allowed_cols:
-#                 allowed_cols.append(col)
-#             with cols[i]:
-#                 new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
-#                                        index=allowed_cols.index(col), key=f"{idx}_{col}")
-#                 new_columns.append(new_col)
-        
-#         # Check for unique column names
-#         if len(set(new_columns)) != len(new_columns):
-#             st.markdown(f"<span style='color: red;'>' \
-#                 f'Please update the column names to include {ColumnNames.as_str()}  using the dropdown lists provided. ' \
-#                 f'Ensure all column names are unique.</span>", unsafe_allow_html=True)
-#             st.markdown("<span style='color: orange;'>" \
-#                 f"Warning: Multiple columns have the same name. Please ensure all column names are unique.</span>", unsafe_allow_html=True)
-#         elif all(name in new_columns for name in ColumnNames.as_list()):
-#             df.columns = new_columns
-#             st.markdown("<span style='color: green;'>Looks good!</span>", unsafe_allow_html=True)
-#         else:
-#             st.markdown(f"<span style='color: red;'>"
-#                 f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided. " \
-#                 f"Ensure all column names are unique.</span>", unsafe_allow_html=True)
-#         st.dataframe(df.head())
+def load_column_mappings(file_path="column_mappings.json"):
+    with open(file_path, "r") as file:
+        return json.load(file)
+
+
+def auto_rename_columns(df):
+    mappings = load_column_mappings()
+    new_columns = {col: col for col in df.columns}  # Initialize with the original column names
+
+    for standard_name, possible_names in mappings.items():
+        for possible_name in possible_names:
+            if possible_name in df.columns:
+                new_columns[possible_name] = standard_name
+                break
+
+    df.rename(columns=new_columns, inplace=True)
+    return df
+
+
+def rename_columns_all_dfs(dfs, bank_name):
+    for i, df in enumerate(dfs):
+        dfs[i] = auto_rename_columns(df, bank_name)
+        rename_columns(dfs[i], i)
+    return dfs
 
 
 def display_message(color, message):
@@ -208,15 +202,28 @@ def rename_columns(df, idx):
         st.dataframe(df.head())
 
 
+# def rename_columns_all_dfs(dfs):
+#     clean_dfs = []  # Initialize the list to store cleaned DataFrames
+#     for i, df in enumerate(dfs):
+#         rename_columns(df, i)
+#         # Check if DataFrame has the required columns and unique names
+#         if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
+#             clean_df = df[ColumnNames.as_list()]
+#             clean_dfs.append(clean_df)
+#     return clean_dfs
+
+
 def rename_columns_all_dfs(dfs):
     clean_dfs = []  # Initialize the list to store cleaned DataFrames
     for i, df in enumerate(dfs):
-        rename_columns(df, i)
+        df = auto_rename_columns(df)  # Automatically rename columns
+        rename_columns(df, i)  # Allow user to rename columns if needed
         # Check if DataFrame has the required columns and unique names
         if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
             clean_df = df[ColumnNames.as_list()]
             clean_dfs.append(clean_df)
     return clean_dfs
+
     
 
 def concatenate_dfs(dfs):
