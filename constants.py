@@ -2,14 +2,15 @@ class ColumnNames:
     DATE = 'date'
     TEXT = 'text'
     COST = 'cost'
+    CATEGORY = 'category'
 
     @classmethod
     def as_list(cls):
-        return [cls.DATE, cls.TEXT, cls.COST]
+        return [cls.DATE, cls.TEXT, cls.COST, cls.CATEGORY]
 
     @classmethod
     def as_set(cls):
-        return {cls.DATE, cls.TEXT, cls.COST}
+        return {cls.DATE, cls.TEXT, cls.COST, cls.CATEGORY}
 
     @classmethod
     def as_str(cls):

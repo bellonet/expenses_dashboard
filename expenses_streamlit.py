@@ -89,11 +89,18 @@ def get_allowed_columns(col, allowed_cols):
 
 
 def rename_columns(df, idx):
+
+    if ColumnNames.CATEGORY not in df.columns:
+        df[ColumnNames.CATEGORY] = ''  # Initialize with None or suitable default
+
     cols = st.columns(len(df.columns))
     new_columns = []
 
     for i, col in enumerate(df.columns):
-        allowed_cols = get_allowed_columns(col, ColumnNames.as_list())
+        if col == ColumnNames.CATEGORY:
+            allowed_cols = [ColumnNames.CATEGORY]  # Only CATEGORY allowed for its own column
+        else:
+            allowed_cols = [c for c in get_allowed_columns(col, ColumnNames.as_list()) if c != ColumnNames.CATEGORY]
 
         with cols[i]:
             new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
@@ -133,11 +140,10 @@ def rename_columns_all_dfs(dfs, container):
 
 
 def concatenate_dfs(dfs):
-    utils.display_message('green', "Done! Formated and concatenated all tables!")
+    utils.display_message('green', "Formated and merged table!")
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
         df = utils.format_df(df)
-        st.dataframe(df)
         logger.info("Successfully concatenated all dataframes")
         return df
     else:
@@ -166,12 +172,11 @@ if all_dfs:
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = concatenate_dfs(valid_dfs)
-        save_df_to_csv(df)
 
         add_categories(df, categories_dict)
         df = delete_rows(df, to_del_substr_l)
-
-        st.dataframe(df.head(10))
+        st.dataframe(df)
+        save_df_to_csv(df)
 
         if not df.empty:
             min_date = utils.get_date_col_as_datetime(df).min().date()
