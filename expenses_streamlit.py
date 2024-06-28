@@ -5,6 +5,26 @@ import re
 import numpy as np
 import logging
 import plotly.express as px
+from types import SimpleNamespace
+
+
+class ColumnNames:
+    DATE = 'date'
+    TEXT = 'text'
+    COST = 'cost'
+
+    @classmethod
+    def as_list(cls):
+        return [cls.DATE, cls.TEXT, cls.COST]
+
+    @classmethod
+    def as_set(cls):
+        return {cls.DATE, cls.TEXT, cls.COST}
+
+    @classmethod
+    def as_str(cls):
+        # Returns column names as a formatted string with single quotes and commas
+        return ", ".join(f"'{name}'" for name in cls.as_list())
 
 
 def set_logger():
@@ -20,7 +40,7 @@ def str_col_to_float(df):
     df['cost'] = df['cost'].astype(float)
 
 
-def convert_dates(df, date_col='date'):
+def convert_dates(df, date_col=ColumnNames.DATE):
     df[date_col] = pd.to_datetime(df[date_col], 
                                 format='%d.%m.%Y', 
                                 errors='coerce')
@@ -29,9 +49,9 @@ def convert_dates(df, date_col='date'):
    
 
 def reorganize_df(df):
-    df.rename(columns={'Buchungstag': 'date',
-                        'Umsatz in EUR': 'cost', 
-                        'Buchungstext': 'name', 
+    df.rename(columns={'Buchungstag': ColumnNames.DATE,
+                        'Umsatz in EUR': ColumnNames.COST, 
+                        'Buchungstext': ColumnNames.TEXT, 
                         'Vorgang':'type'}, inplace=True)
     df = df[df['cost'].notna()]
     df = df.drop(columns=['Umsatztag', 'Referenz', 'Wertstellung (Valuta)'])
@@ -88,32 +108,35 @@ def upload_csvs_to_dfs():
     return all_dfs
 
 
-def rename_columns(df, idx, allowed_names=['date', 'name', 'cost']):
+def rename_columns(df, idx):
     with st.container():
         cols = st.columns(len(df.columns))
         new_columns = []
         for i, col in enumerate(df.columns):
             # Ensure the current column name is in the allowed list and set as default
-            allowed_names_cp = allowed_names.copy()
-            if col not in allowed_names_cp:
-                allowed_names_cp.append(col)
+            allowed_cols = ColumnNames.as_list().copy()
+            if col not in allowed_cols:
+                allowed_cols.append(col)
             with cols[i]:
-                new_col = st.selectbox(f"Rename '{col}'", options=allowed_names_cp,
-                                       index=allowed_names_cp.index(col), key=f"{idx}_{col}")
+                new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
+                                       index=allowed_cols.index(col), key=f"{idx}_{col}")
                 new_columns.append(new_col)
         
         # Check for unique column names
         if len(set(new_columns)) != len(new_columns):
-            st.markdown("<span style='color: red;'>Please update the column names to include 'date', 'name', and 'cost' using the dropdown lists provided. Ensure all column names are unique.</span>", unsafe_allow_html=True)
-            st.markdown("<span style='color: orange;'>Warning: Multiple columns have the same name. Please ensure all column names are unique.</span>", unsafe_allow_html=True)
-            st.dataframe(df.head())
-        elif all(name in new_columns for name in allowed_names):
+            st.markdown(f"<span style='color: red;'>' \
+                f'Please update the column names to include {ColumnNames.as_str()}  using the dropdown lists provided. ' \
+                f'Ensure all column names are unique.</span>", unsafe_allow_html=True)
+            st.markdown("<span style='color: orange;'>" \
+                f"Warning: Multiple columns have the same name. Please ensure all column names are unique.</span>", unsafe_allow_html=True)
+        elif all(name in new_columns for name in ColumnNames.as_list()):
             df.columns = new_columns
-            st.markdown("<span style='color: green;'>Done</span>", unsafe_allow_html=True)
-            st.dataframe(df.head())
+            st.markdown("<span style='color: green;'>Looks good!</span>", unsafe_allow_html=True)
         else:
-            st.markdown("<span style='color: red;'>Please update the column names to include 'date', 'name', and 'cost' using the dropdown lists provided. Ensure all column names are unique.</span>", unsafe_allow_html=True)
-            st.dataframe(df.head())
+            st.markdown(f"<span style='color: red;'>"
+                f"Please update the column names to include {ColumnNames.as_str()} using the dropdown lists provided. " \
+                f"Ensure all column names are unique.</span>", unsafe_allow_html=True)
+        st.dataframe(df.head())
 
 
 
@@ -122,9 +145,8 @@ def rename_columns_all_dfs(dfs):
     for i, df in enumerate(dfs):
         rename_columns(df, i)
         # Check if DataFrame has the required columns and unique names
-        if all(col in df.columns for col in ['date', 'name', 'cost']) and len(df.columns) == len(set(df.columns)):
-            # Filter the DataFrame to keep only the relevant columns
-            clean_df = df[['date', 'name', 'cost']]
+        if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
+            clean_df = df[ColumnNames.as_list()]
             clean_dfs.append(clean_df)
     return clean_dfs
     
@@ -133,6 +155,7 @@ def concatenate_dfs(dfs):
     if len(dfs) > 0:
         final_df = pd.concat(dfs, ignore_index=True)
         st.dataframe(final_df)
+        logger.info("Successfully concatenated all dataframes")
         return final_df
     else:
         st.error('No valid DataFrames to concatenate.')
@@ -152,98 +175,95 @@ if all_dfs:
         st.markdown("<span style='color: green;'>Done</span>", unsafe_allow_html=True)
 
 
+        # df = reorganize_df(df)
+        # add_categories(df, categories_dict)
+        # df = delete_rows(df, str_to_del)
+        # #st.write("## Concatenated DataFrame")
 
-#         df = pd.concat(all_dfs, ignore_index=True)
-#         logger.info("Successfully concatenated all dataframes")
-#         df = reorganize_df(df)
-#         add_categories(df, categories_dict)
-#         df = delete_rows(df, str_to_del)
-#         #st.write("## Concatenated DataFrame")
-
-#         if not df.empty:
-#             min_date = df['date'].min().date()  # Convert Pandas Timestamp to Python date
-#             max_date = df['date'].max().date()  # Convert Pandas Timestamp to Python date
+        # if not df.empty:
+        #     min_date = df['date'].min().date()  # Convert Pandas Timestamp to Python date
+        #     max_date = df['date'].max().date()  # Convert Pandas Timestamp to Python date
             
-#             # Create a date range selector
-#             date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
+        #     # Create a date range selector
+        #     date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
             
-#             if len(date_range) == 2:
-#                 start_date, end_date = date_range
-#                 # Convert Python date to Pandas Timestamp for comparison
-#                 start_date = pd.Timestamp(start_date)
-#                 end_date = pd.Timestamp(end_date)
+        #     if len(date_range) == 2:
+        #         start_date, end_date = date_range
+        #         # Convert Python date to Pandas Timestamp for comparison
+        #         start_date = pd.Timestamp(start_date)
+        #         end_date = pd.Timestamp(end_date)
                 
-#                 # Filter the DataFrame based on the selected date range
-#                 filtered_df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
-#             else:
-#                 filtered_df = df 
+        #         # Filter the DataFrame based on the selected date range
+        #         filtered_df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
+        #     else:
+        #         filtered_df = df 
 
 
-#             st.dataframe(filtered_df.head(10))
-#             #st.dataframe(df[df.category=='sports_equipment'].head(30))
+        #     st.dataframe(filtered_df.head(10))
+        #     #st.dataframe(df[df.category=='sports_equipment'].head(30))
             
-#             df_grouped = filtered_df.groupby('category')['cost'].sum().reset_index()
-#             df_grouped['cost'] = df_grouped['cost'].abs()  
+        #     df_grouped = filtered_df.groupby('category')['cost'].sum().reset_index()
+        #     df_grouped['cost'] = df_grouped['cost'].abs()  
 
-#             # Create a pie chart using the grouped and absolute values
-#             if not df_grouped.empty and 'cost' in df_grouped.columns and 'category' in df_grouped.columns:
-#                 fig = px.pie(
-#                     df_grouped, 
-#                     values='cost', 
-#                     names='category', 
-#                     title='Expenses by Category',
-#                     width=1000,  # Increase the width
-#                     height=1000,  # Increase the height
-#                     hole=0.4  # Make it a donut chart for better space utilization
-#                 )
+        #     # Create a pie chart using the grouped and absolute values
+        #     if not df_grouped.empty and 'cost' in df_grouped.columns and 'category' in df_grouped.columns:
+        #         fig = px.pie(
+        #             df_grouped, 
+        #             values='cost', 
+        #             names='category', 
+        #             title='Expenses by Category',
+        #             width=1000,  # Increase the width
+        #             height=1000,  # Increase the height
+        #             hole=0.4  # Make it a donut chart for better space utilization
+        #         )
                 
-#                 # Update the layout to show values and percentages
-#                 fig.update_traces(textinfo='label+percent', insidetextorientation='radial', 
-#                                   texttemplate='%{label}<br>%{value:.2f}€  -  %{percent}')
-#                 # fig.update_traces(textinfo='label+percent', insidetextorientation='radial', 
-#                 #       texttemplate='%{label}<br>%{value:.2f}€<br>(%{percent})')
+        #         # Update the layout to show values and percentages
+        #         fig.update_traces(textinfo='label+percent', insidetextorientation='radial', 
+        #                           texttemplate='%{label}<br>%{value:.2f}€  -  %{percent}')
+        #         # fig.update_traces(textinfo='label+percent', insidetextorientation='radial', 
+        #         #       texttemplate='%{label}<br>%{value:.2f}€<br>(%{percent})')
 
-#                 fig.update_layout(
-#                     legend_title="Categories",
-#                     legend=dict(
-#                         orientation="h",
-#                         yanchor="bottom",
-#                         y=-0.25,  # Adjust as needed for optimal positioning
-#                         xanchor="center",
-#                         x=0.5
-#                     )
-#                 )
+        #         fig.update_layout(
+        #             legend_title="Categories",
+        #             legend=dict(
+        #                 orientation="h",
+        #                 yanchor="bottom",
+        #                 y=-0.25,  # Adjust as needed for optimal positioning
+        #                 xanchor="center",
+        #                 x=0.5
+        #             )
+        #         )
                 
-#                 st.plotly_chart(fig)
-#             else:
-#                 st.write("No valid data to plot.")
+        #         st.plotly_chart(fig)
+        #     else:
+        #         st.write("No valid data to plot.")
 
-#             if not filtered_df.empty:
-#                 filtered_df['month'] = filtered_df['date'].dt.to_period('M').astype(str)
-#                 monthly_expenses = filtered_df.groupby(['month', 'category'])['cost'].sum().abs().reset_index()
+        #     if not filtered_df.empty:
+        #         filtered_df['month'] = filtered_df['date'].dt.to_period('M').astype(str)
+        #         monthly_expenses = filtered_df.groupby(['month', 'category'])['cost'].sum().abs().reset_index()
 
-#                 # Create a bar chart
-#                 fig = px.bar(
-#                     monthly_expenses,
-#                     x='month',
-#                     y='cost',
-#                     color='category',
-#                     title='Monthly Expenses by Category',
-#                     labels={'month': 'Month', 'cost': 'Expenses (€)'},
-#                     height=600,
-#                     text='cost'
-#                 )
+        #         # Create a bar chart
+        #         fig = px.bar(
+        #             monthly_expenses,
+        #             x='month',
+        #             y='cost',
+        #             color='category',
+        #             title='Monthly Expenses by Category',
+        #             labels={'month': 'Month', 'cost': 'Expenses (€)'},
+        #             height=600,
+        #             text='cost'
+        #         )
                 
-#                 # Improve the layout
-#                 fig.update_layout(
-#                     xaxis_title='Month',
-#                     yaxis_title='Total Expenses',
-#                     barmode='stack',
-#                     xaxis={'type': 'category'},  # This ensures the x-axis treats months as discrete categories
-#                     legend_title='Categories'
-#                 )
+        #         # Improve the layout
+        #         fig.update_layout(
+        #             xaxis_title='Month',
+        #             yaxis_title='Total Expenses',
+        #             barmode='stack',
+        #             xaxis={'type': 'category'},  # This ensures the x-axis treats months as discrete categories
+        #             legend_title='Categories'
+        #         )
                 
-#                 # Display the bar chart in Streamlit
-#                 st.plotly_chart(fig)
-#             else:
-#                 st.write("No data available for the selected date range to plot.")
+        #         # Display the bar chart in Streamlit
+        #         st.plotly_chart(fig)
+        #     else:
+        #         st.write("No data available for the selected date range to plot.")
