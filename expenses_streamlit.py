@@ -8,6 +8,13 @@ import plotly.express as px
 from types import SimpleNamespace
 
 
+def set_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logging.info("Logging test")
+    return logger
+
+
 class ColumnNames:
     DATE = 'date'
     TEXT = 'text'
@@ -27,13 +34,6 @@ class ColumnNames:
         return ", ".join(f"'{name}'" for name in cls.as_list())
 
 
-def set_logger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logging.info("Logging test")
-    return logger
-
-
 def str_to_float(value):
     if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', value):
         # German format (e.g., -1.000,23 or 1.000,23)
@@ -50,27 +50,24 @@ def str_to_float(value):
     return float(value)
 
 
-def convert_dates(df, date_col=ColumnNames.DATE):
-    df[date_col] = pd.to_datetime(df[date_col], 
-                                format='%d.%m.%Y', 
-                                errors='coerce')
-    df[date_col].fillna(method='ffill', inplace=True)    
+def col_str_to_float(df, col=ColumnNames.COST):
+    df[col] = df[col].apply(str_to_float)
     return df
-   
 
-def reorganize_df(df):
-    df.rename(columns={'Buchungstag': ColumnNames.DATE,
-                        'Umsatz in EUR': ColumnNames.COST, 
-                        'Buchungstext': ColumnNames.TEXT, 
-                        'Vorgang':'type'}, inplace=True)
-    df = df[df['cost'].notna()]
-    df = df.drop(columns=['Umsatztag', 'Referenz', 'Wertstellung (Valuta)'])
-    df = df[df['type'] != 'Visa-Kartenabrechnung']
-    df = df[~df['type'].str.contains('Guthaben', case=False, na=False)]
-    str_col_to_float(df)
-    df = convert_dates(df)
-    df['category'] = ''
-    return df 
+
+def col_str_to_date(df, col=ColumnNames.DATE):
+    df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
+    df[col] = df[col].dt.strftime('%d.%m.%Y')
+    df[col].fillna(method='ffill', inplace=True)    
+    return df
+
+
+def format_df(df):
+    df.reset_index(drop=True, inplace=True)
+    df = df[df[ColumnNames.COST].notna()]
+    df = col_str_to_float(df)
+    df = col_str_to_date(df)
+    return df
 
 
 def read_categories(json_path='categories.json'):
@@ -236,11 +233,12 @@ def rename_columns_all_dfs(dfs, container):
    
 def concatenate_dfs(dfs):
     if len(dfs) > 0:
-        final_df = pd.concat(dfs, ignore_index=True)
-        st.dataframe(final_df)
+        df = pd.concat(dfs, ignore_index=True)
+        df = format_df(df)
+        st.dataframe(df)
         logger.info("Successfully concatenated all dataframes")
         display_message('green', "Done! Formated and concatinated all tables!")
-        return final_df
+        return df
     else:
         st.error('No valid DataFrames to concatenate.')
 
