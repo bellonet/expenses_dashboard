@@ -131,15 +131,24 @@ def rename_columns_all_dfs(dfs, container):
 
 
 def concatenate_dfs(dfs):
+    utils.display_message('green', "Done! Formated and concatenated all tables!")
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
         df = utils.format_df(df)
         st.dataframe(df)
         logger.info("Successfully concatenated all dataframes")
-        utils.display_message('green', "Done! Formated and concatinated all tables!")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')
+
+
+def save_df_to_csv(df):
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(label="Download concatenated data as CSV",
+                       data=csv,
+                       file_name='expenses_formated.csv',
+                       mime='text/csv')
+    st.warning('Make sure to save your work by downloading the formated and concatenated CSV.')
 
 
 logger = set_logger()
@@ -155,6 +164,7 @@ if all_dfs:
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = concatenate_dfs(valid_dfs)
+        save_df_to_csv(df)
 
         # df = reorganize_df(df)
         # add_categories(df, categories_dict)
