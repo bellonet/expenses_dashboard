@@ -32,6 +32,10 @@ def col_str_to_date(df, col=ColumnNames.DATE):
     return df
 
 
+def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format='%d.%m.%Y'):
+    return pd.to_datetime(df[col], format=date_format, errors='coerce')
+
+
 def format_df(df):
     df.reset_index(drop=True, inplace=True)
     df = df[df[ColumnNames.COST].notna()]
