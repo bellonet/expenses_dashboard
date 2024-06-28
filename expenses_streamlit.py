@@ -4,9 +4,9 @@ import json
 import re
 import numpy as np
 import logging
-import plotly.express as px
 import utils
 from constants import ColumnNames
+from plots import plot_pie_chart, plot_bar_chart
 
 
 def set_logger():
@@ -159,6 +159,22 @@ def save_df_to_csv(df):
     st.warning('Make sure to save your work by downloading the formated and concatenated CSV.')
 
 
+def filter_df_by_date_range(df, date_col):
+    min_date = utils.get_date_col_as_datetime(df).min().date()
+    max_date = utils.get_date_col_as_datetime(df).max().date()
+
+    date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
+
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+        start_date = pd.Timestamp(start_date)
+        end_date = pd.Timestamp(end_date)
+
+        return df[(utils.get_date_col_as_datetime(df) >= start_date) & (utils.get_date_col_as_datetime(df) <= end_date)]
+    else:
+        return df
+
+
 logger = set_logger()
 
 categories_dict = read_categories()
@@ -177,90 +193,22 @@ if all_dfs:
         df = delete_rows(df, to_del_substr_l)
         st.dataframe(df)
         save_df_to_csv(df)
-
         if not df.empty:
-            min_date = utils.get_date_col_as_datetime(df).min().date()
-            max_date = utils.get_date_col_as_datetime(df).max().date()
-
-            # Create a date range selector
-            date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
-
-            if len(date_range) == 2:
-                start_date, end_date = date_range
-
-                start_date = pd.Timestamp(start_date)
-                end_date = pd.Timestamp(end_date)
-
-                filtered_df = df[(utils.get_date_col_as_datetime(df) >= start_date) &
-                                 (utils.get_date_col_as_datetime(df) <= end_date)]
-            else:
-                filtered_df = df
-
+            filtered_df = filter_df_by_date_range(df, utils.get_date_col_as_datetime(df))
             st.dataframe(filtered_df.head(10))
-            #st.dataframe(df[df.category=='sports_equipment'].head(30))
 
             df_grouped = filtered_df.groupby('category')[ColumnNames.COST].sum().reset_index()
             df_grouped[ColumnNames.COST] = df_grouped[ColumnNames.COST].abs()
 
-            # Create a pie chart using the grouped and absolute values
-            if not df_grouped.empty and ColumnNames.COST in df_grouped.columns and 'category' in df_grouped.columns:
-                fig = px.pie(
-                    df_grouped,
-                    values='cost',
-                    names='category',
-                    title='Expenses by Category',
-                    width=1000,  # Increase the width
-                    height=1000,  # Increase the height
-                    hole=0.4  # Make it a donut chart for better space utilization
-                )
-
-                # Update the layout to show values and percentages
-                fig.update_traces(textinfo='label+percent', insidetextorientation='radial',
-                                  texttemplate='%{label}<br>%{value:.2f}€  -  %{percent}')
-                # fig.update_traces(textinfo='label+percent', insidetextorientation='radial',
-                #       texttemplate='%{label}<br>%{value:.2f}€<br>(%{percent})')
-
-                fig.update_layout(
-                    legend_title="Categories",
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=-0.25,  # Adjust as needed for optimal positioning
-                        xanchor="center",
-                        x=0.5
-                    )
-                )
-
-                st.plotly_chart(fig)
+            if not df_grouped.empty:
+                plot_pie_chart(df_grouped)
             else:
                 st.write("No valid data to plot.")
 
             if not filtered_df.empty:
                 filtered_df['month'] = utils.get_date_col_as_datetime(filtered_df).dt.to_period('M').astype(str)
-                monthly_expenses = filtered_df.groupby(['month', 'category'])[ColumnNames.COST].sum().abs().reset_index()
-
-                # Create a bar chart
-                fig = px.bar(
-                    monthly_expenses,
-                    x='month',
-                    y=ColumnNames.COST,
-                    color='category',
-                    title='Monthly Expenses by Category',
-                    labels={'month': 'Month', 'cost': 'Expenses (€)'},
-                    height=600,
-                    text=ColumnNames.COST
-                )
-
-                # Improve the layout
-                fig.update_layout(
-                    xaxis_title='Month',
-                    yaxis_title='Total Expenses',
-                    barmode='stack',
-                    xaxis={'type': 'category'},  # This ensures the x-axis treats months as discrete categories
-                    legend_title='Categories'
-                )
-
-                # Display the bar chart in Streamlit
-                st.plotly_chart(fig)
+                monthly_expenses = filtered_df.groupby(['month', 'category'])[
+                    ColumnNames.COST].sum().abs().reset_index()
+                plot_bar_chart(monthly_expenses)
             else:
                 st.write("No data available for the selected date range to plot.")
