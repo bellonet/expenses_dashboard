@@ -34,10 +34,20 @@ def set_logger():
     return logger
 
 
-def str_col_to_float(df):
-    df['cost'] = df['cost'].str.replace('.', '', regex=False)
-    df['cost'] = df['cost'].str.replace(',', '.')
-    df['cost'] = df['cost'].astype(float)
+def str_to_float(value):
+    if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', value):
+        # German format (e.g., -1.000,23 or 1.000,23)
+        value = value.replace('.', '').replace(',', '.')
+    elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', value):
+        # English format (e.g., -1,000.23 or 1,000.23)
+        value = value.replace(',', '')
+    elif re.match(r'^-?\d+(\,\d{2})$', value):
+        # German simple format (e.g., -1000,23 or 1000,23)
+        value = value.replace(',', '.')
+    elif re.match(r'^-?\d+(\.\d{2})$', value):
+        # English simple format (e.g., -1000.23 or 1000.23)
+        value = value
+    return float(value)
 
 
 def convert_dates(df, date_col=ColumnNames.DATE):
@@ -154,8 +164,16 @@ def is_valid_date(date_str):
 
 def is_valid_float(float_str):
     try:
-        float(float_str.replace(',', '.'))
-        return True
+        # Check for German format (e.g., -1.000,23 or 1.000,23)
+        if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', float_str):
+            return True
+        # Check for English format (e.g., -1,000.23 or 1,000.23)
+        elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', float_str):
+            return True
+        # Check for plain formats (e.g., -1000.23 or 1000.23 or -1000,23 or 1000,23)
+        elif re.match(r'^-?\d+(\.\d{2})$', float_str) or re.match(r'^-?\d+(\,\d{2})$', float_str):
+            return True
+        return False
     except ValueError:
         return False
 
