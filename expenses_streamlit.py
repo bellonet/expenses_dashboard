@@ -196,25 +196,44 @@ def generate_trash_icon_html(category):
 def inject_custom_css():
     css = """
     <style>
-        /* Target the internal vertical block elements within the columns */
+        /* Reduce the gap between elements in the vertical blocks */
         [data-testid='column'] [data-testid='stVerticalBlock'] {
             gap: 0rem !important;
             margin-top: -13px !important;
             margin-bottom: -13px !important;
         }
-
+        
+        div.stButton > button:first-child {
+            background-color: None !important;
+            border: None;
+            color: green;
+            margin: 10px 0px 10px 0px;
+        }
 
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
 
 
+# Function to manage sidebar categories
 def manage_sidebar_categories(categories_dict):
     inject_custom_css()  # Ensure styles are injected when the function is called
 
     st.sidebar.header("Categories")
     selected_categories = {}
 
+    # Buttons for Select All and Unselect All
+    col_btn1, col_btn2 = st.sidebar.columns([1, 1])
+    if col_btn1.button('Select All'):
+        for category in categories_dict.keys():
+            st.session_state[f'checkbox_{category}'] = True
+        st.experimental_rerun()
+    if col_btn2.button('None'):
+        for category in categories_dict.keys():
+            st.session_state[f'checkbox_{category}'] = False
+        st.experimental_rerun()
+
+    # Display categories with checkboxes and trash icons
     for category in categories_dict.keys():
         col1, col2 = st.sidebar.columns([1, 10])
 
@@ -223,8 +242,9 @@ def manage_sidebar_categories(categories_dict):
         col1.markdown(trash_icon_html, unsafe_allow_html=True)
 
         # Checkbox for category selection
-        selected_categories[category] = col2.checkbox(category, value=True)
+        selected_categories[category] = col2.checkbox(category, value=True, key=f'checkbox_{category}')
 
+    # Input for adding new categories
     new_category = st.sidebar.text_input("Add new category")
     if st.sidebar.button("Add Category"):
         if new_category and new_category not in categories_dict:
