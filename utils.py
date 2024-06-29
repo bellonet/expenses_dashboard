@@ -1,7 +1,7 @@
 import re
 import pandas as pd
-from constants import ColumnNames
 import streamlit as st
+import json
 
 
 def str_to_float(value):
@@ -18,30 +18,6 @@ def str_to_float(value):
         # English simple format (e.g., -1000.23 or 1000.23)
         value = value
     return float(value)
-
-
-def col_str_to_float(df, col=ColumnNames.COST):
-    df[col] = df[col].apply(str_to_float)
-    return df
-
-
-def col_str_to_date(df, col=ColumnNames.DATE):
-    df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
-    df[col] = df[col].dt.strftime('%d.%m.%Y')
-    df[col].fillna(method='ffill', inplace=True)
-    return df
-
-
-def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format='%d.%m.%Y'):
-    return pd.to_datetime(df[col], format=date_format, errors='coerce')
-
-
-def format_df(df):
-    df.reset_index(drop=True, inplace=True)
-    df = df[df[ColumnNames.COST].notna()]
-    df = col_str_to_float(df)
-    df = col_str_to_date(df)
-    return df
 
 
 def display_message(color, message):
@@ -75,8 +51,18 @@ def is_valid_float(float_str):
         return False
 
 
-def check_column_format(df, is_valid_func, col_idx):
-    first_item = df.iloc[0, col_idx]
-    if not is_valid_func(first_item):
-        return False
-    return True
+def load_json(file_path):
+    with open(file_path, "r") as file:
+        return json.load(file)
+
+
+def read_categories(json_path='json/categories.json'):
+    with open(json_path, 'r') as json_file:
+        categories_dict = json.load(json_file)
+    return categories_dict
+
+
+def read_strs_to_del(json_path='json/delete_list.json'):
+    with open(json_path, 'r') as json_file:
+        to_del_list = json.load(json_file)
+    return to_del_list
