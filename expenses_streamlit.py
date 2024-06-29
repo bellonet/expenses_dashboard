@@ -28,9 +28,7 @@ def read_strs_to_del(json_path='json/delete_list.json'):
     return to_del_list
 
 
-def add_categories(df, categories_dict):
-    if 'category' not in df.columns:
-        df['category'] = ''
+def add_categories_to_df(df, categories_dict):
     for category_name, keywords in categories_dict.items():
         pattern = '|'.join(re.escape(keyword) for keyword in keywords)
         df['category'] = np.where(df['category'].str.strip() == '',
@@ -46,6 +44,9 @@ def delete_rows(df, to_del_list):
 def set_st():
     st.set_page_config(layout="wide")
     st.title('Expenses Analyzer - Comdirect')
+    st.markdown(
+        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">',
+        unsafe_allow_html=True)
 
 
 def upload_csvs_to_dfs():
@@ -175,40 +176,115 @@ def filter_df_by_date_range(df, date_col):
         return df
 
 
-logger = set_logger()
+def generate_trash_icon_html(category):
+    return f'''
+    <button class="trash-button" style="border:none;background:none;padding:0;margin-top:5px;vertical-align:middle;" 
+    onclick="if(confirm('Are you sure you want to delete category \'{category}\'?')) {{
+        fetch('/delete_category', {{
+            method: 'POST',
+            headers: {{
+                'Content-Type': 'application/json',
+            }},
+            body: JSON.stringify({{'category': '{category}'}})
+        }});
+    }}">
+        <i class="fas fa-trash-alt" style="font-size: 11px;"></i>
+    </button>
+    '''
 
+
+def inject_custom_css():
+    css = """
+    <style>
+        /* Target the internal vertical block elements within the columns */
+        [data-testid='column'] [data-testid='stVerticalBlock'] {
+            gap: 0rem !important;
+            margin-top: -13px !important;
+            margin-bottom: -13px !important;
+        }
+
+
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+
+def manage_sidebar_categories(categories_dict):
+    inject_custom_css()  # Ensure styles are injected when the function is called
+
+    st.sidebar.header("Categories")
+    selected_categories = {}
+
+    for category in categories_dict.keys():
+        col1, col2 = st.sidebar.columns([1, 10])
+
+        # HTML for trash icon
+        trash_icon_html = generate_trash_icon_html(category)
+        col1.markdown(trash_icon_html, unsafe_allow_html=True)
+
+        # Checkbox for category selection
+        selected_categories[category] = col2.checkbox(category, value=True)
+
+    new_category = st.sidebar.text_input("Add new category")
+    if st.sidebar.button("Add Category"):
+        if new_category and new_category not in categories_dict:
+            categories_dict[new_category] = new_category
+            st.sidebar.success(f"Category '{new_category}' added.")
+
+    return selected_categories
+
+
+def apply_category_filter(df, selected_categories):
+    df['category'] = df['category'].apply(lambda x: x if x in selected_categories and selected_categories[x] else '')
+    return df
+
+
+def apply_date_filter(df):
+    return filter_df_by_date_range(df, utils.get_date_col_as_datetime(df))
+
+
+def display_data(df):
+    st.dataframe(df.head(10))
+
+    df_grouped = df.groupby('category')[ColumnNames.COST].sum().reset_index()
+    df_grouped[ColumnNames.COST] = df_grouped[ColumnNames.COST].abs()
+
+    if not df_grouped.empty:
+        plot_pie_chart(df_grouped)
+    else:
+        st.write("No valid data to plot.")
+
+    if not df.empty:
+        df['month'] = utils.get_date_col_as_datetime(df).dt.to_period('M').astype(str)
+        monthly_expenses = df.groupby(['month', 'category'])[ColumnNames.COST].sum().abs().reset_index()
+        plot_bar_chart(monthly_expenses)
+    else:
+        st.write("No data available for the selected date range to plot.")
+
+logger = set_logger()
+# Reading initial data
 categories_dict = read_categories()
 to_del_substr_l = read_strs_to_del()
 
 set_st()
 all_dfs = upload_csvs_to_dfs()
 placeholder = st.empty()
+
 if all_dfs:
     valid_dfs = rename_columns_all_dfs(all_dfs, placeholder.container)
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = concatenate_dfs(valid_dfs)
+        add_categories_to_df(df, categories_dict)
 
-        add_categories(df, categories_dict)
+        date_filtered_df = apply_date_filter(df)
+        selected_categories = manage_sidebar_categories(categories_dict)
+        df = apply_category_filter(date_filtered_df, selected_categories)
         df = delete_rows(df, to_del_substr_l)
+
         st.dataframe(df)
         save_df_to_csv(df)
+
         if not df.empty:
-            filtered_df = filter_df_by_date_range(df, utils.get_date_col_as_datetime(df))
-            st.dataframe(filtered_df.head(10))
+            display_data(df)
 
-            df_grouped = filtered_df.groupby('category')[ColumnNames.COST].sum().reset_index()
-            df_grouped[ColumnNames.COST] = df_grouped[ColumnNames.COST].abs()
-
-            if not df_grouped.empty:
-                plot_pie_chart(df_grouped)
-            else:
-                st.write("No valid data to plot.")
-
-            if not filtered_df.empty:
-                filtered_df['month'] = utils.get_date_col_as_datetime(filtered_df).dt.to_period('M').astype(str)
-                monthly_expenses = filtered_df.groupby(['month', 'category'])[
-                    ColumnNames.COST].sum().abs().reset_index()
-                plot_bar_chart(monthly_expenses)
-            else:
-                st.write("No data available for the selected date range to plot.")

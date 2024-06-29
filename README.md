@@ -23,9 +23,13 @@ and visualize expenses through interactive pie and bar charts.
 
 This project is licensed under the MIT License. 
 
-## To Do:
+## To Do
 
-- Link to Jona's calculator.
+- Show only one table.
+- Create functionality of the category sidebar filters + category edits.
+- Save categories json function.
 - Output total expenses.
 - Output total expenses per day.
+- Link to Jona's calculator.
+- Add rows to categories functionality.
 - Per category plots.
