@@ -14,7 +14,8 @@ def col_str_to_float(df, col=ColumnNames.COST):
 def col_str_to_date(df, col=ColumnNames.DATE):
     df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
     df[col] = df[col].dt.strftime('%d.%m.%Y')
-    df[col].fillna(method='ffill', inplace=True)
+    #df[col] = df[col].fillna(method='ffill')
+    df[col] = df[col].ffill()
     return df
 
 

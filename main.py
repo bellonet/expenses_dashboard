@@ -10,7 +10,6 @@ from plots import plot_pie_chart, plot_bar_chart
 def set_logger():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    logging.info("Logging test")
     return logger
 
 
