@@ -75,3 +75,9 @@ def read_strs_to_del(json_path='json/delete_list.json'):
     with open(json_path, 'r') as json_file:
         to_del_list = json.load(json_file)
     return to_del_list
+
+
+def invert_costs(df, cost_column):
+    """Invert the sign of the cost column in the DataFrame."""
+    df[cost_column] = -df[cost_column]
+    return df

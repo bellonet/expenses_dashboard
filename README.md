@@ -15,7 +15,7 @@ and visualize expenses through interactive pie and bar charts.
 ## Usage
 - Upload CSV files via the interface.
 - Use the sidebar to filter data by date range and categories.
-- View and iteract with the visualizations.
+- View and interact with the visualizations.
 - Download the processed data as a CSV file.
 
 
@@ -25,8 +25,9 @@ This project is licensed under the MIT License.
 
 ## To Do
 
-- Show only one table.
-- Create functionality of the category sidebar filters + category edits.
+- Fix colors to match in plots.
+- Add per category per expense plot. 
+- Create functionality of category edits - add and delete.
 - Save categories json function.
 - Output total expenses.
 - Output total expenses per day.

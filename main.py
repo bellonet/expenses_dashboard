@@ -5,6 +5,7 @@ import utils
 import df_utils
 from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
+import plotly.express as px
 
 
 def set_logger():
@@ -65,66 +66,31 @@ def manage_sidebar_categories(categories_dict):
     return selected_categories, categories_dict
 
 
-#
-# # Function to manage sidebar categories
-# def manage_sidebar_categories(categories_dict):
-#     st.markdown(html_utils.custom_css_sidebar(), unsafe_allow_html=True)
-#
-#     st.sidebar.header("Categories")
-#     selected_categories = {}
-#
-#     # Buttons for Select All and Unselect All
-#     col_btn1, col_btn2 = st.sidebar.columns([1, 1])
-#     if not col_btn1.button('Select All'):
-#         pass
-#     else:
-#         for category in categories_dict.keys():
-#             st.session_state[f'checkbox_{category}'] = True
-#         st.experimental_rerun()
-#     if col_btn2.button('None'):
-#         for category in categories_dict.keys():
-#             st.session_state[f'checkbox_{category}'] = False
-#         st.experimental_rerun()
-#
-#     # Display categories with checkboxes and trash icons
-#     for category in categories_dict.keys():
-#         col1, col2 = st.sidebar.columns([1, 10])
-#
-#         # HTML for trash icon
-#         trash_icon_html = html_utils.generate_trash_icon_html(category)
-#         col1.markdown(trash_icon_html, unsafe_allow_html=True)
-#
-#         # Checkbox for category selection
-#         selected_categories[category] = col2.checkbox(category, value=True, key=f'checkbox_{category}')
-#
-#     # Input for adding new categories
-#     new_category = st.sidebar.text_input("Add new category")
-#     if st.sidebar.button("Add Category"):
-#         sorted_categories = utils.add_new_category(categories_dict, new_category)
-#         if sorted_categories != categories_dict:
-#             categories_dict = sorted_categories
-#             st.sidebar.success(f"Category '{new_category}' added.")
-#             st.experimental_rerun()
-#
-#     return selected_categories, categories_dict
-
-
 def display_data(df):
     st.dataframe(df)
     df_utils.save_df_to_csv(df)
 
+    # Invert the costs in the DataFrame before processing
+    df = utils.invert_costs(df, ColumnNames.COST)
+
+    # Calculate and display the total expenses
+    total_expenses = df[ColumnNames.COST].sum()
+    st.metric(label="Total Expenses", value=f"${total_expenses:,.2f}")
+
+    category_color_map = {category: color for category, color in
+                          zip(sorted(df['category'].unique()), px.colors.qualitative.Alphabet)}
+
     df_grouped = df.groupby('category')[ColumnNames.COST].sum().reset_index()
-    df_grouped[ColumnNames.COST] = df_grouped[ColumnNames.COST].abs()
 
     if not df_grouped.empty:
-        plot_pie_chart(df_grouped)
+        plot_pie_chart(df_grouped, category_color_map)
     else:
         st.write("No valid data to plot.")
 
     if not df.empty:
         df['month'] = df_utils.get_date_col_as_datetime(df).dt.to_period('M').astype(str)
-        monthly_expenses = df.groupby(['month', 'category'])[ColumnNames.COST].sum().abs().reset_index()
-        plot_bar_chart(monthly_expenses)
+        monthly_expenses = df.groupby(['month', 'category'])[ColumnNames.COST].sum().reset_index()
+        plot_bar_chart(monthly_expenses, category_color_map)
     else:
         st.write("No data available for the selected date range to plot.")
 
