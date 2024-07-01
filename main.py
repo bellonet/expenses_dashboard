@@ -31,7 +31,9 @@ def manage_sidebar_categories(categories_dict):
 
     # Buttons for Select All and Unselect All
     col_btn1, col_btn2 = st.sidebar.columns([1, 1])
-    if col_btn1.button('Select All'):
+    if not col_btn1.button('Select All'):
+        pass
+    else:
         for category in categories_dict.keys():
             st.session_state[f'checkbox_{category}'] = True
         st.experimental_rerun()
@@ -54,11 +56,13 @@ def manage_sidebar_categories(categories_dict):
     # Input for adding new categories
     new_category = st.sidebar.text_input("Add new category")
     if st.sidebar.button("Add Category"):
-        if new_category and new_category not in categories_dict:
-            categories_dict[new_category] = new_category
+        sorted_categories = utils.add_new_category(categories_dict, new_category)
+        if sorted_categories != categories_dict:
+            categories_dict = sorted_categories
             st.sidebar.success(f"Category '{new_category}' added.")
+            st.experimental_rerun()
 
-    return selected_categories
+    return selected_categories, categories_dict
 
 
 def display_data(df):
@@ -97,7 +101,7 @@ if all_dfs:
         df_utils.add_categories_to_df(df, categories_dict)
 
         date_filtered_df = df_utils.apply_date_filter(df)
-        selected_categories = manage_sidebar_categories(categories_dict)
+        selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
         df = df_utils.apply_category_filter(date_filtered_df, selected_categories)
         df = df_utils.delete_rows(df, to_del_substr_l)
 

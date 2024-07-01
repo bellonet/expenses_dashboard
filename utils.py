@@ -2,6 +2,7 @@ import re
 import pandas as pd
 import streamlit as st
 import json
+from collections import OrderedDict
 
 
 def str_to_float(value):
@@ -59,6 +60,14 @@ def load_json(file_path):
 def read_categories(json_path='json/categories.json'):
     with open(json_path, 'r') as json_file:
         categories_dict = json.load(json_file)
+    return OrderedDict(sorted(categories_dict.items()))
+
+
+def add_new_category(categories_dict, new_category):
+    if new_category and new_category not in categories_dict:
+        categories_dict[new_category] = new_category  # or an appropriate value
+        sorted_categories = OrderedDict(sorted(categories_dict.items()))
+        return sorted_categories
     return categories_dict
 
 
