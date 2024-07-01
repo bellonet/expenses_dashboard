@@ -129,7 +129,7 @@ def apply_date_filter(df):
 
 
 def apply_category_filter(df, selected_categories):
-    df['category'] = df['category'].apply(lambda x: x if x in selected_categories and selected_categories[x] else '')
+    df = df[df['category'].apply(lambda x: x in selected_categories and selected_categories[x])]
     return df
 
 
