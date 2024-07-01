@@ -66,6 +66,7 @@ def manage_sidebar_categories(categories_dict):
 
 def display_data(df):
     st.dataframe(df)
+    df_utils.save_df_to_csv(df)
 
     df_grouped = df.groupby('category')[ColumnNames.COST].sum().reset_index()
     df_grouped[ColumnNames.COST] = df_grouped[ColumnNames.COST].abs()
@@ -103,9 +104,6 @@ if all_dfs:
         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
         df = df_utils.apply_category_filter(date_filtered_df, selected_categories)
         df = df_utils.delete_rows(df, to_del_substr_l)
-
-        #st.dataframe(df)
-        df_utils.save_df_to_csv(df)
 
         if not df.empty:
             display_data(df)

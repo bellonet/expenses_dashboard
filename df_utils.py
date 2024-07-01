@@ -170,8 +170,9 @@ def concatenate_dfs(dfs):
 
 def save_df_to_csv(df):
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(label="Download concatenated data as CSV",
+    st.download_button(label="Download current CSV",
                        data=csv,
                        file_name='expenses_formated.csv',
                        mime='text/csv')
-    st.warning('Make sure to save your work by downloading the formated and concatenated CSV.')
+    st.warning('''Save your work by downloading the CSV  
+                Make sure you don't select unwanted filters!''')
