@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 import re
-from constants import ColumnNames
+from constants import ColumnNames, Colors
 import utils
 
 
@@ -86,7 +86,7 @@ def rename_columns(df, idx):
 
         if date_valid and cost_valid:
             df.columns = new_columns
-            utils.display_message('green', "Looks good!")
+            utils.display_message(Colors.PRIMARY_COLOR, "Looks good!")
 
     else:
         utils.display_message('red', f"Please update the column names to include {ColumnNames.as_str()} "
@@ -165,7 +165,7 @@ def upload_csvs_to_dfs():
 
 
 def concatenate_dfs(dfs):
-    utils.display_message('green', "Formated and merged table!")
+    utils.display_message(Colors.PRIMARY_COLOR, "Formated and merged table!")
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
         df = format_df(df)

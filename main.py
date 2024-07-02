@@ -19,7 +19,7 @@ def set_st():
     st.set_page_config(layout="wide")
     st.title('Expenses Analyzer')
     st.markdown(
-        f'<h4 style="color:{Colors.SECONDARY_TEXT};">Analyze your expenses to make smarter financial decisions.</h4>',
+        f'<h4 style="color:{Colors.PRIMARY_COLOR};">Analyze your expenses to make smarter financial decisions.</h4>',
         unsafe_allow_html=True)
     st.markdown(
         '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
@@ -30,7 +30,7 @@ def set_footer():
     footer = f"""
     <div style="color:{Colors.SECONDARY_TEXT}; width: 100%; text-align: left; padding: 10px 0;">
     <p>Please contact me for any bugs or feature requests: bellonet @ gmail</p>
-    <p>Another amazing tool to help you make financial decisions: 
+    <p>Another amazing tool: 
     <a href="https://www.jonathanronen.com/time-to-retirement.html" target="_blank">Time to Retirement Calculator</a>
     , made by my better half ❤️</p>
     </div>

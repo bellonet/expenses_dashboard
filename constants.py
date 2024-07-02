@@ -35,4 +35,5 @@ class PlotSettings:
 
 
 class Colors:
+    PRIMARY_COLOR = "#249d3c"
     SECONDARY_TEXT = "#a1a1a1"
