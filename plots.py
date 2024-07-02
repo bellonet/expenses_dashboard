@@ -2,6 +2,7 @@ import plotly.express as px
 import streamlit as st
 from constants import ColumnNames
 
+
 def plot_pie_chart(df_grouped, category_color_map):
     fig = px.pie(
         df_grouped,
@@ -11,6 +12,7 @@ def plot_pie_chart(df_grouped, category_color_map):
         width=1000,
         height=1000,
         hole=0.4,
+        color='category',
         color_discrete_map=category_color_map
     )
 
