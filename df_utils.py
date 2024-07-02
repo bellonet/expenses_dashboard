@@ -14,7 +14,6 @@ def col_str_to_float(df, col=ColumnNames.COST):
 def col_str_to_date(df, col=ColumnNames.DATE):
     df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
     df[col] = df[col].dt.strftime('%d.%m.%Y')
-    #df[col] = df[col].fillna(method='ffill')
     df[col] = df[col].ffill()
     return df
 
@@ -62,14 +61,14 @@ def get_allowed_columns(col, allowed_cols):
 def rename_columns(df, idx):
 
     if ColumnNames.CATEGORY not in df.columns:
-        df[ColumnNames.CATEGORY] = ''  # Initialize with None or suitable default
+        df[ColumnNames.CATEGORY] = ''
 
     cols = st.columns(len(df.columns))
     new_columns = []
 
     for i, col in enumerate(df.columns):
         if col == ColumnNames.CATEGORY:
-            allowed_cols = [ColumnNames.CATEGORY]  # Only CATEGORY allowed for its own column
+            allowed_cols = [ColumnNames.CATEGORY]
         else:
             allowed_cols = [c for c in get_allowed_columns(col, ColumnNames.as_list()) if c != ColumnNames.CATEGORY]
 
@@ -108,7 +107,6 @@ def rename_columns_all_dfs(dfs, container):
         return clean_dfs
 
 
-# def get min and max date from df:
 def get_min_max_date(df):
     min_date = get_date_col_as_datetime(df).min().date()
     max_date = get_date_col_as_datetime(df).max().date()
@@ -183,3 +181,13 @@ def save_df_to_csv(df):
                        mime='text/csv')
     st.warning('''Save your work by downloading the CSV  
                 Make sure you don't select unwanted filters!''')
+
+
+def get_monthly_expense_df(df, df_grouped):
+    df['month'] = get_date_col_as_datetime(df).dt.to_period('M').astype(str)
+    monthly_expenses = df.groupby(['month', ColumnNames.CATEGORY])[ColumnNames.COST].sum().reset_index()
+    category_order = df_grouped.sort_values(by=ColumnNames.COST, ascending=False)[ColumnNames.CATEGORY].tolist()
+    monthly_expenses[ColumnNames.CATEGORY] = pd.Categorical(monthly_expenses[ColumnNames.CATEGORY],
+                                                            categories=category_order,
+                                                            ordered=True)
+    return monthly_expenses

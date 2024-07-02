@@ -7,7 +7,6 @@ import utils
 import df_utils
 from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
-import plotly.express as px
 
 
 def set_logger():
@@ -20,9 +19,8 @@ def set_st():
     st.set_page_config(layout="wide")
     st.title('Expenses Analyzer')
     st.markdown(
-        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">',
-        unsafe_allow_html=True)
-
+        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
+        , unsafe_allow_html=True)
 
 
 def manage_sidebar_categories(categories_dict):
@@ -54,7 +52,9 @@ def manage_sidebar_categories(categories_dict):
             st.session_state[f'checkbox_{category}'] = True  # Default value initialization
 
         # Checkbox for category selection
-        selected_categories[category] = col2.checkbox(category, value=st.session_state[f'checkbox_{category}'], key=f'checkbox_{category}')
+        selected_categories[category] = col2.checkbox(category,
+                                                      value=st.session_state[f'checkbox_{category}'],
+                                                      key=f'checkbox_{category}')
 
     # Input for adding new categories
     new_category = st.sidebar.text_input("Add new category")
@@ -71,28 +71,20 @@ def manage_sidebar_categories(categories_dict):
 def display_data(df):
     st.dataframe(df)
     df_utils.save_df_to_csv(df)
-
-    # Invert the costs in the DataFrame before processing
     df = utils.invert_costs(df, ColumnNames.COST)
-
     plots.display_summary_metrics(df)
 
-    category_color_map = {category: color for category, color in
-                          zip(sorted(df['category'].unique()), px.colors.qualitative.Alphabet)}
+    category_color_map = plots.generate_color_map(df, ColumnNames.CATEGORY)
 
-    df_grouped = df.groupby('category')[ColumnNames.COST].sum().reset_index()
+    df_grouped = df.groupby(ColumnNames.CATEGORY)[ColumnNames.COST].sum().reset_index()
 
     if not df_grouped.empty:
         plot_pie_chart(df_grouped, category_color_map)
-    else:
-        st.write("No valid data to plot.")
 
-    if not df.empty:
-        df['month'] = df_utils.get_date_col_as_datetime(df).dt.to_period('M').astype(str)
-        monthly_expenses = df.groupby(['month', 'category'])[ColumnNames.COST].sum().reset_index()
+        monthly_expenses = df_utils.get_monthly_expense_df(df, df_grouped)
         plot_bar_chart(monthly_expenses, category_color_map)
     else:
-        st.write("No data available for the selected date range to plot.")
+        st.write("No valid data to plot.")
 
 
 logger = set_logger()

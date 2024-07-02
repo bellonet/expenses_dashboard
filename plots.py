@@ -2,6 +2,12 @@ import plotly.express as px
 import streamlit as st
 from constants import ColumnNames
 import df_utils
+from constants import PlotSettings
+
+
+def generate_color_map(df, column):
+    unique_categories = sorted(df[column].unique())
+    return {category: color for category, color in zip(unique_categories, PlotSettings.DEFAULT_COLORS)}
 
 
 def display_summary_metrics(df):
@@ -26,15 +32,15 @@ def display_summary_metrics(df):
 
 
 def plot_pie_chart(df_grouped, category_color_map):
+    st.markdown("<br>", unsafe_allow_html=True)
     fig = px.pie(
         df_grouped,
-        values='cost',
-        names='category',
-        title='Expenses by Category',
+        values=ColumnNames.COST,
+        names=ColumnNames.CATEGORY,
         width=1000,
         height=1000,
         hole=0.4,
-        color='category',
+        color=ColumnNames.CATEGORY,
         color_discrete_map=category_color_map
     )
 
@@ -53,7 +59,12 @@ def plot_pie_chart(df_grouped, category_color_map):
             y=-0.25,
             xanchor="center",
             x=0.5
-        )
+        ),
+        title=dict(
+            text='Expenses by Category',
+            font=dict(size=PlotSettings.TITLE_SIZE)
+        ),
+        font=dict(size=PlotSettings.LABEL_SIZE)
     )
 
     st.plotly_chart(fig)
@@ -72,25 +83,28 @@ def plot_bar_chart(monthly_expenses, category_color_map):
         labels={'month': 'Month', ColumnNames.COST: 'Expenses (€)'},
         height=600,
         text=ColumnNames.COST,
+        category_orders={'cate': list(monthly_expenses['cate'].cat.categories)},
         color_discrete_map=category_color_map
     )
 
-    # Update traces for custom hover information
     fig.update_traces(
-        texttemplate='%{y:.2f}€',  # Display only the cost on the bar
+        texttemplate='%{y:.2f}€',
         hovertemplate='<b>Month: %{x}</b><br>Expense: %{y:.2f}€'
     )
 
-    # Layout adjustments
     fig.update_layout(
         xaxis_title='Month',
         yaxis_title='Total Expenses',
         barmode='stack',
         xaxis={'type': 'category'},
-        legend_title='Categories'
+        legend_title='Categories',
+        title=dict(
+            text='Expenses by Category',
+            font=dict(size=PlotSettings.TITLE_SIZE)
+        ),
+        font=dict(size=PlotSettings.LABEL_SIZE)
     )
 
-    # Calculate and display total per month
     for month, group in monthly_expenses.groupby('month'):
         total_expenses = group[ColumnNames.COST].sum()
         fig.add_annotation(
