@@ -1,6 +1,28 @@
 import plotly.express as px
 import streamlit as st
 from constants import ColumnNames
+import df_utils
+
+
+def display_summary_metrics(df):
+    # Calculate the total expenses
+    total_expenses = df[ColumnNames.COST].sum()
+
+    min_date, max_date = df_utils.get_min_max_date(df)
+
+    num_months = (max_date.year - min_date.year) * 12 + max_date.month - min_date.month + 1
+    num_days = (max_date - min_date).days + 1
+
+    avg_expenses_per_month = total_expenses / num_months
+    avg_expenses_per_day = total_expenses / num_days
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(label="Total Expenses", value=f"${total_expenses:,.2f}")
+    col2.metric(label="Average Expenses per Month", value=f"${avg_expenses_per_month:,.2f}")
+    col3.metric(label="Average Expenses per Day", value=f"${avg_expenses_per_day:,.2f}")
 
 
 def plot_pie_chart(df_grouped, category_color_map):

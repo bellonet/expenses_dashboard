@@ -1,6 +1,8 @@
 import streamlit as st
 import html_utils
 import logging
+
+import plots
 import utils
 import df_utils
 from constants import ColumnNames
@@ -73,9 +75,7 @@ def display_data(df):
     # Invert the costs in the DataFrame before processing
     df = utils.invert_costs(df, ColumnNames.COST)
 
-    # Calculate and display the total expenses
-    total_expenses = df[ColumnNames.COST].sum()
-    st.metric(label="Total Expenses", value=f"${total_expenses:,.2f}")
+    plots.display_summary_metrics(df)
 
     category_color_map = {category: color for category, color in
                           zip(sorted(df['category'].unique()), px.colors.qualitative.Alphabet)}

@@ -108,9 +108,16 @@ def rename_columns_all_dfs(dfs, container):
         return clean_dfs
 
 
-def filter_df_by_date_range(df):
+# def get min and max date from df:
+def get_min_max_date(df):
     min_date = get_date_col_as_datetime(df).min().date()
     max_date = get_date_col_as_datetime(df).max().date()
+    return min_date, max_date
+
+
+def filter_df_by_date_range(df):
+
+    min_date, max_date = get_min_max_date(df)
 
     date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
 

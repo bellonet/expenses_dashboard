@@ -25,12 +25,9 @@ This project is licensed under the MIT License.
 
 ## To Do
 
-- Fix colors to match in plots.
 - Add per category per expense plot. 
 - Create functionality of category edits - add and delete.
 - Save categories json function.
-- Output total expenses.
-- Output total expenses per day.
 - Link to Jona's calculator.
 - Add rows to categories functionality.
 - Per category plots.
