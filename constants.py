@@ -32,3 +32,7 @@ class PlotSettings:
         "#DC143C", "#0000FF", "#006400", "#FF8C00",
         "#9400D3", "#FF1493", "#00CED1", "#FF0000"
     ]
+
+
+class Colors:
+    SECONDARY_TEXT = "#a1a1a1"

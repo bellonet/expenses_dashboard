@@ -29,4 +29,3 @@ This project is licensed under the MIT License.
 - Add rows to categories functionality.
 - Save categories json function.
 - Add per category per expense plot.
-- Link to Jona's calculator.

@@ -5,7 +5,7 @@ import logging
 import plots
 import utils
 import df_utils
-from constants import ColumnNames
+from constants import ColumnNames, Colors
 from plots import plot_pie_chart, plot_bar_chart
 
 
@@ -19,8 +19,23 @@ def set_st():
     st.set_page_config(layout="wide")
     st.title('Expenses Analyzer')
     st.markdown(
+        f'<h4 style="color:{Colors.SECONDARY_TEXT};">Analyze your expenses to make smarter financial decisions.</h4>',
+        unsafe_allow_html=True)
+    st.markdown(
         '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
         , unsafe_allow_html=True)
+
+
+def set_footer():
+    footer = f"""
+    <div style="color:{Colors.SECONDARY_TEXT}; width: 100%; text-align: left; padding: 10px 0;">
+    <p>Please contact me for any bugs or feature requests: bellonet @ gmail</p>
+    <p>Another amazing tool to help you make financial decisions: 
+    <a href="https://www.jonathanronen.com/time-to-retirement.html" target="_blank">Time to Retirement Calculator</a>
+    , made by my better half ❤️</p>
+    </div>
+    """
+    st.markdown(footer, unsafe_allow_html=True)
 
 
 def manage_sidebar_categories(categories_dict):
@@ -110,3 +125,5 @@ if all_dfs:
 
         if not df.empty:
             display_data(df)
+
+set_footer()

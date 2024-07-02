@@ -152,7 +152,8 @@ def delete_rows(df, to_del_list):
 
 
 def upload_csvs_to_dfs():
-    csv_files = st.file_uploader("Upload CSV files", accept_multiple_files=True, type=['csv'])
+    csv_files = st.file_uploader("Upload CSV files - bank statements, credit card statements, etc.",
+                                 accept_multiple_files=True, type=['csv'])
     all_dfs = []
     for f in csv_files:
         try:
