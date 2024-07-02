@@ -25,9 +25,8 @@ This project is licensed under the MIT License.
 
 ## To Do
 
-- Add per category per expense plot. 
 - Create functionality of category edits - add and delete.
-- Save categories json function.
-- Link to Jona's calculator.
 - Add rows to categories functionality.
-- Per category plots.
+- Save categories json function.
+- Add per category per expense plot.
+- Link to Jona's calculator.
