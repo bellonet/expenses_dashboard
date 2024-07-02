@@ -25,7 +25,10 @@ This project is licensed under the MIT License.
 
 ## To Do
 
+- Chatgpt add merchant column.
+- Chatgpt add category column
 - Create functionality of category edits - add and delete.
 - Add rows to categories functionality.
 - Save categories json function.
 - Add per category per expense plot.
+- Add number of transactions per category plot.

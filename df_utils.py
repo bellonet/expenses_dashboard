@@ -165,10 +165,10 @@ def upload_csvs_to_dfs():
 
 
 def concatenate_dfs(dfs):
-    utils.display_message(Colors.PRIMARY_COLOR, "Formated and merged table!")
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
         df = format_df(df)
+        utils.display_message(Colors.PRIMARY_COLOR, "Created a formated and merged table!")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')
@@ -192,3 +192,9 @@ def get_monthly_expense_df(df, df_grouped):
                                                             categories=category_order,
                                                             ordered=True)
     return monthly_expenses
+
+
+# create a function that makes a merchant column in the dataframe:
+def make_merchant_column(df, openai_client):
+    df['merchant'] = utils.get_merchants_from_text_chatgpt(df[ColumnNames.TEXT].tolist(), openai_client)
+    return df

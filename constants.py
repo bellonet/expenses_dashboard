@@ -1,4 +1,4 @@
-import plotly.express as px
+from openai import OpenAI
 
 
 class ColumnNames:
@@ -37,3 +37,15 @@ class PlotSettings:
 class Colors:
     PRIMARY_COLOR = "#249d3c"
     SECONDARY_TEXT = "#a1a1a1"
+
+
+class OpenAIConfig:
+    MAX_TOKENS = 4096
+    RESPONSE_TOKENS = 500
+    CHUNK_SIZE = MAX_TOKENS - RESPONSE_TOKENS
+
+    @staticmethod
+    def set_openai_client():
+        with open('openai_key.txt', 'r') as file:
+            openai_key = file.read().strip()
+        return OpenAI(api_key=openai_key)

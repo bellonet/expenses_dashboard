@@ -5,7 +5,7 @@ import logging
 import plots
 import utils
 import df_utils
-from constants import ColumnNames, Colors
+from constants import ColumnNames, Colors, OpenAIConfig
 from plots import plot_pie_chart, plot_bar_chart
 
 
@@ -103,7 +103,8 @@ def display_data(df):
 
 
 logger = set_logger()
-# Reading initial data
+openai_client = OpenAIConfig.set_openai_client()
+
 categories_dict = utils.read_categories()
 to_del_substr_l = utils.read_strs_to_del()
 
@@ -116,6 +117,8 @@ if all_dfs:
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = df_utils.concatenate_dfs(valid_dfs)
+
+        df = df_utils.make_merchant_column(df, openai_client)
         df_utils.add_categories_to_df(df, categories_dict)
 
         date_filtered_df = df_utils.apply_date_filter(df)

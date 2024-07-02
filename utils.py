@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 import json
 from collections import OrderedDict
+from constants import OpenAIConfig, Colors
 
 
 def str_to_float(value):
@@ -81,3 +82,48 @@ def invert_costs(df, cost_column):
     """Invert the sign of the cost column in the DataFrame."""
     df[cost_column] = -df[cost_column]
     return df
+
+
+def chunk_texts(texts_list, chunk_size):
+    chunks = []
+    current_chunk = []
+
+    current_length = 0
+    for text in texts_list:
+        text_length = len(text)
+        if current_length + text_length + 1 > chunk_size:  # +1 for the newline or separator
+            chunks.append(current_chunk)
+            current_chunk = []
+            current_length = 0
+        current_chunk.append(text)
+        current_length += text_length + 1  # +1 for the newline or separator
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks
+
+
+def get_merchants_from_text_chatgpt(texts_list, openai_client):
+    display_message(Colors.PRIMARY_COLOR, "Please wait a couple of minutes for ChatGPT to process the table..")
+    all_merchants = []
+
+    chunks = chunk_texts(texts_list, OpenAIConfig.CHUNK_SIZE)
+
+    for chunk in chunks:
+        messages = [
+            {"role": "user",
+             "content": f'Please match each transaction with its corresponding merchant in the format "Merchant:"'
+                        f'and list only the merchant names from the following transactions:\n\n{". ".join(chunk)}'}
+        ]
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=OpenAIConfig.MAX_TOKENS,
+        )
+
+        merchants = response.choices[0].message.content.strip().split("\n")
+        all_merchants.extend(merchants)
+
+    return all_merchants
