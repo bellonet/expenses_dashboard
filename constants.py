@@ -40,9 +40,10 @@ class Colors:
 
 
 class OpenAIConfig:
+    MODEL = "gpt-4o"
     MAX_TOKENS = 4096
-    RESPONSE_TOKENS = 500
-    CHUNK_SIZE = MAX_TOKENS - RESPONSE_TOKENS
+    # RESPONSE_TOKENS = 500
+    # CHUNK_SIZE = MAX_TOKENS - RESPONSE_TOKENS
 
     @staticmethod
     def set_openai_client():

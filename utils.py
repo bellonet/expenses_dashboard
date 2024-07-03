@@ -1,9 +1,10 @@
+import logging
 import re
 import pandas as pd
 import streamlit as st
 import json
 from collections import OrderedDict
-from constants import OpenAIConfig, Colors
+from constants import OpenAIConfig
 
 
 def str_to_float(value):
@@ -84,46 +85,76 @@ def invert_costs(df, cost_column):
     return df
 
 
-def chunk_texts(texts_list, chunk_size):
-    chunks = []
-    current_chunk = []
-
-    current_length = 0
-    for text in texts_list:
-        text_length = len(text)
-        if current_length + text_length + 1 > chunk_size:  # +1 for the newline or separator
-            chunks.append(current_chunk)
-            current_chunk = []
-            current_length = 0
-        current_chunk.append(text)
-        current_length += text_length + 1  # +1 for the newline or separator
-
-    if current_chunk:
-        chunks.append(current_chunk)
-
+def chunk_texts(texts_list, chunk_size=25):
+    chunks = [texts_list[i:i + chunk_size] for i in range(0, len(texts_list), chunk_size)]
     return chunks
 
 
+def query_chatgpt(query, openai_client):
+    messages = [
+        {"role": "user",
+         "content": query}
+    ]
+    response = openai_client.chat.completions.create(
+        model=OpenAIConfig.MODEL,
+        messages=messages,
+        max_tokens=OpenAIConfig.MAX_TOKENS,
+    )
+    merchants = response.choices[0].message.content.strip().split("\n")
+    return merchants
+
+
+def manually_match_merchants_and_chunk(merchants, chunk):
+    matched_merchants = []
+    for text in chunk:
+        found = False
+        for merchant in merchants:
+            if merchant in text:
+                matched_merchants.append(merchant)
+                found = True
+                break
+        if not found:
+            matched_merchants.append('')
+
+    return matched_merchants
+
+
 def get_merchants_from_text_chatgpt(texts_list, openai_client):
-    display_message(Colors.PRIMARY_COLOR, "Please wait a couple of minutes for ChatGPT to process the table..")
+    message_placeholder = st.empty()
+    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
+                              f"It's good time to make a coffee or go to the pull-up bar."))
     all_merchants = []
 
-    chunks = chunk_texts(texts_list, OpenAIConfig.CHUNK_SIZE)
+    chunks = chunk_texts(texts_list)
 
-    for chunk in chunks:
-        messages = [
-            {"role": "user",
-             "content": f'Please match each transaction with its corresponding merchant in the format "Merchant:"'
-                        f'and list only the merchant names from the following transactions:\n\n{". ".join(chunk)}'}
-        ]
+    with st.spinner("Processing..."):
+        for chunk in chunks:
 
-        response = openai_client.chat.completions.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=OpenAIConfig.MAX_TOKENS,
-        )
+            query = (f'List the merchant names from the following transactions, '
+                     f'exclude other transaction identifiers but keep the core merchant name, keep cities and location.'
+                     f'Remove common business suffixes like GmbH unless essential for distinguishing similar names. '
+                     'Do not include payment intermediaries like PayPal or other gateways in the output '
+                     f'unless you really cannot find the merchant in the text.'
+                     f'Treat every line as a merchant entry, even if it looks like a summary or header. '
+                     f' The first line should be included as well, no matter what it contains. '
+                     f'One output per input - total {len(chunk)} - in order, never miss a line:\n\n{"\n".join(chunk)}')
 
-        merchants = response.choices[0].message.content.strip().split("\n")
-        all_merchants.extend(merchants)
+            merchants = query_chatgpt(query, openai_client)
 
+            if len(merchants) != len(chunk):
+                logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
+                merchants = manually_match_merchants_and_chunk(merchants, chunk)
+
+                with open('bad_chunk.txt', 'a') as f:
+                    f.write('Chunk:\n')
+                    f.write('\n'.join(chunk))
+                    f.write('\n\nMerchants:\n')
+                    f.write('\n'.join(merchants))
+                    f.write('\n\n')
+
+            all_merchants.extend(merchants)
+
+        all_merchants = [re.sub(r'^[\d.-]*\s*', '', merchant) for merchant in all_merchants]
+
+    message_placeholder.empty()
     return all_merchants
