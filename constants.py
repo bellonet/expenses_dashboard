@@ -1,4 +1,5 @@
 from openai import OpenAI
+import google.generativeai as genai
 
 
 class ColumnNames:
@@ -40,13 +41,35 @@ class Colors:
 
 
 class OpenAIConfig:
-    MODEL = "gpt-4o"
-    MAX_TOKENS = 4096
-    # RESPONSE_TOKENS = 500
-    # CHUNK_SIZE = MAX_TOKENS - RESPONSE_TOKENS
+    # MODEL = "gpt-4o"
+    MODEL = "gpt-3.5-turbo-0125"
+    CHUNK_SIZE = 15
 
-    @staticmethod
-    def set_openai_client():
+    @classmethod
+    def set_client(cls):
         with open('openai_key.txt', 'r') as file:
             openai_key = file.read().strip()
         return OpenAI(api_key=openai_key)
+
+
+class GenAIConfig:
+    MODEL = genai.GenerativeModel("gemini-1.5-flash")
+    CHUNK_SIZE = 25
+
+    @classmethod
+    def set_client(cls):
+        with open('gemini_key.txt', 'r') as file:
+            genai_key = file.read().strip()
+        return genai.configure(api_key=genai_key)
+
+
+def get_ai_config(model_name):
+    if model_name == "openai":
+        return OpenAIConfig
+    elif model_name == "genai":
+        return GenAIConfig
+    else:
+        raise ValueError("Unsupported model name")
+
+
+AIConfig = get_ai_config("genai")

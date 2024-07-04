@@ -195,6 +195,6 @@ def get_monthly_expense_df(df, df_grouped):
 
 
 # create a function that makes a merchant column in the dataframe:
-def make_merchant_column(df, openai_client):
-    df['merchant'] = utils.get_merchants_from_text_chatgpt(df[ColumnNames.TEXT].tolist(), openai_client)
+def make_merchant_column(df, ai_config, client):
+    df['merchant'] = utils.get_merchants_from_text_chatgpt(df[ColumnNames.TEXT].tolist(), ai_config, client)
     return df

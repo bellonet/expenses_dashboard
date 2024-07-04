@@ -1,11 +1,11 @@
 import streamlit as st
-import html_utils
+import utils_html
 import logging
 
 import plots
 import utils
-import df_utils
-from constants import ColumnNames, Colors, OpenAIConfig
+import utils_df
+from constants import ColumnNames, Colors, get_ai_config
 from plots import plot_pie_chart, plot_bar_chart
 
 
@@ -39,7 +39,7 @@ def set_footer():
 
 
 def manage_sidebar_categories(categories_dict):
-    st.markdown(html_utils.custom_css_sidebar(), unsafe_allow_html=True)
+    st.markdown(utils_html.custom_css_sidebar(), unsafe_allow_html=True)
     st.sidebar.header("Categories")
     selected_categories = {}
 
@@ -59,7 +59,7 @@ def manage_sidebar_categories(categories_dict):
         col1, col2 = st.sidebar.columns([1, 10])
 
         # HTML for trash icon
-        trash_icon_html = html_utils.generate_trash_icon_html(category)
+        trash_icon_html = utils_html.generate_trash_icon_html(category)
         col1.markdown(trash_icon_html, unsafe_allow_html=True)
 
         # Initialize or retrieve checkbox state from session state
@@ -85,7 +85,7 @@ def manage_sidebar_categories(categories_dict):
 
 def display_data(df):
     st.dataframe(df)
-    df_utils.save_df_to_csv(df)
+    utils_df.save_df_to_csv(df)
     df = utils.invert_costs(df, ColumnNames.COST)
     plots.display_summary_metrics(df)
 
@@ -96,35 +96,36 @@ def display_data(df):
     if not df_grouped.empty:
         plot_pie_chart(df_grouped, category_color_map)
 
-        monthly_expenses = df_utils.get_monthly_expense_df(df, df_grouped)
+        monthly_expenses = utils_df.get_monthly_expense_df(df, df_grouped)
         plot_bar_chart(monthly_expenses, category_color_map)
     else:
         st.write("No valid data to plot.")
 
 
 logger = set_logger()
-openai_client = OpenAIConfig.set_openai_client()
+ai_config = get_ai_config("genai")
+ai_client = ai_config.set_client()
 
 categories_dict = utils.read_categories()
 to_del_substr_l = utils.read_strs_to_del()
 
 set_st()
-all_dfs = df_utils.upload_csvs_to_dfs()
+all_dfs = utils_df.upload_csvs_to_dfs()
 placeholder = st.empty()
 
 if all_dfs:
-    valid_dfs = df_utils.rename_columns_all_dfs(all_dfs, placeholder.container)
+    valid_dfs = utils_df.rename_columns_all_dfs(all_dfs, placeholder.container)
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
-        df = df_utils.concatenate_dfs(valid_dfs)
+        df = utils_df.concatenate_dfs(valid_dfs)
 
-        df = df_utils.make_merchant_column(df, openai_client)
-        df_utils.add_categories_to_df(df, categories_dict)
+        df = utils_df.make_merchant_column(df, ai_config, ai_client)
+        utils_df.add_categories_to_df(df, categories_dict)
 
-        date_filtered_df = df_utils.apply_date_filter(df)
+        date_filtered_df = utils_df.apply_date_filter(df)
         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
-        df = df_utils.apply_category_filter(date_filtered_df, selected_categories)
-        df = df_utils.delete_rows(df, to_del_substr_l)
+        df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
+        df = utils_df.delete_rows(df, to_del_substr_l)
 
         if not df.empty:
             display_data(df)
