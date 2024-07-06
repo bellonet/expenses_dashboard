@@ -5,6 +5,7 @@ import streamlit as st
 import json
 from collections import OrderedDict
 import utils_ai
+import ai_queries
 
 
 def str_to_float(value):
@@ -115,14 +116,7 @@ def get_merchants_from_text_chatgpt(texts_list, ai_config, client):
 
     for chunk in chunks:
 
-        query = (f'List the merchant names from the following transactions, '
-                 f'exclude other transaction identifiers but keep the core merchant name, keep cities and location.'
-                 f'Remove common business suffixes like GmbH unless essential for distinguishing similar names. '
-                 'Do not include payment intermediaries like PayPal or other gateways in the output '
-                 f'unless you really cannot find the merchant in the text.'
-                 f'Treat every line as a merchant entry, even if it looks like a summary or header. '
-                 f' The first line should be included as well, no matter what it contains. '
-                 f'One output per input - total {len(chunk)} - in order, never miss a line:\n\n{"\n".join(chunk)}')
+        query = ai_queries.get_merchants_query(chunk)
 
         merchants = utils_ai.query_ai(query, ai_config, client)
 
@@ -131,7 +125,7 @@ def get_merchants_from_text_chatgpt(texts_list, ai_config, client):
             merchants = manually_match_merchants_and_chunk(merchants, chunk)
             print(merchants)
 
-            with open('bad_chunk_openai.txt', 'a') as f:
+            with open('bad_chunk_gemini.txt', 'a') as f:
                 f.write('Chunk:\n')
                 f.write('\n'.join(chunk))
                 f.write('\n\nMerchants:\n')

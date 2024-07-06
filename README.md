@@ -26,7 +26,6 @@ This project is licensed under the MIT License.
 ## To Do
 
 - genAI - set quotas.
-- Better genAI query.
 - AI add merchant column - only if it is not present.
 - AI add category column - only if it is not present.
 - Create functionality of category edits - add and delete.

@@ -54,7 +54,7 @@ class OpenAIConfig:
 
 class GenAIConfig:
     MODEL = genai.GenerativeModel("gemini-1.5-flash")
-    CHUNK_SIZE = 25
+    CHUNK_SIZE = 40
 
     @classmethod
     def set_client(cls):
@@ -63,10 +63,10 @@ class GenAIConfig:
         return genai.configure(api_key=genai_key)
 
 
-def get_ai_config(model_name):
-    if model_name == "openai":
+def get_ai_config(name):
+    if name == "openai":
         return OpenAIConfig
-    elif model_name == "genai":
+    elif name == "genai":
         return GenAIConfig
     else:
         raise ValueError("Unsupported model name")

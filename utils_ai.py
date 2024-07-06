@@ -2,9 +2,9 @@ from constants import OpenAIConfig, GenAIConfig
 
 
 def query_ai(query, config, client):
-    if isinstance(config, OpenAIConfig):
+    if config is OpenAIConfig:
         return query_chatgpt(query, client)
-    elif isinstance(config, GenAIConfig):
+    elif config is GenAIConfig:
         return query_genai(query, config)
     else:
         raise ValueError("Invalid AI client.")
