@@ -5,13 +5,13 @@ import google.generativeai as genai
 class ColumnNames:
     DATE = 'date'
     TEXT = 'text'
-    COST = 'cost'
+    AMOUNT = 'amount'
     MERCHANT = 'merchant'
     CATEGORY = 'category'
 
     @classmethod
     def as_list(cls):
-        return [cls.DATE, cls.TEXT, cls.COST, cls.MERCHANT, cls.CATEGORY]
+        return [cls.DATE, cls.TEXT, cls.AMOUNT, cls.MERCHANT, cls.CATEGORY]
 
     @classmethod
     def as_str(cls):
@@ -20,7 +20,7 @@ class ColumnNames:
 
     @classmethod
     def initial_columns_as_list(cls):
-        return [cls.DATE, cls.TEXT, cls.COST]
+        return [cls.DATE, cls.TEXT, cls.AMOUNT]
 
     @classmethod
     def additional_columns_as_list(cls):

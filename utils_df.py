@@ -8,7 +8,7 @@ import utils_ai
 import ai_queries
 
 
-def col_str_to_float(df, col=ColumnNames.COST):
+def col_str_to_float(df, col=ColumnNames.AMOUNT):
     df[col] = df[col].apply(utils.str_to_float)
     return df
 
@@ -35,7 +35,7 @@ def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format=Globals.DATE_
 
 def format_df(df):
     df.reset_index(drop=True, inplace=True)
-    df = df[df[ColumnNames.COST].notna()]
+    df = df[df[ColumnNames.AMOUNT].notna()]
     df = col_str_to_float(df)
     df = col_str_to_date(df)
     return df
@@ -92,9 +92,9 @@ def manual_rename_columns(df, idx):
     elif all(name in new_columns for name in ColumnNames.as_list()):
 
         date_valid = check_column_format(df, utils.is_valid_date, new_columns.index(ColumnNames.DATE))
-        cost_valid = check_column_format(df, utils.is_valid_float, new_columns.index(ColumnNames.COST))
+        amount_valid = check_column_format(df, utils.is_valid_float, new_columns.index(ColumnNames.AMOUNT))
 
-        if date_valid and cost_valid:
+        if date_valid and amount_valid:
             df.columns = new_columns
             utils.display_message(Colors.PRIMARY_COLOR, "Looks good!")
 
@@ -219,8 +219,8 @@ def save_df_to_csv(df):
 
 def get_monthly_expense_df(df, df_grouped):
     df['month'] = get_date_col_as_datetime(df).dt.to_period('M').astype(str)
-    monthly_expenses = df.groupby(['month', ColumnNames.CATEGORY])[ColumnNames.COST].sum().reset_index()
-    category_order = df_grouped.sort_values(by=ColumnNames.COST, ascending=False)[ColumnNames.CATEGORY].tolist()
+    monthly_expenses = df.groupby(['month', ColumnNames.CATEGORY])[ColumnNames.AMOUNT].sum().reset_index()
+    category_order = df_grouped.sort_values(by=ColumnNames.AMOUNT, ascending=False)[ColumnNames.CATEGORY].tolist()
     monthly_expenses[ColumnNames.CATEGORY] = pd.Categorical(monthly_expenses[ColumnNames.CATEGORY],
                                                             categories=category_order,
                                                             ordered=True)

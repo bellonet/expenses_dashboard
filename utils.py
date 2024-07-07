@@ -16,7 +16,7 @@ def str_to_float(value):
     elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', value):
         # English format (e.g., -1,000.23 or 1,000.23)
         value = value.replace(',', '')
-    elif re.match(r'^-?\d+(\,\d{2})$', value):
+    elif re.match(r'^-?\d+(,\d{2})$', value):
         # German simple format (e.g., -1000,23 or 1000,23)
         value = value.replace(',', '.')
     elif re.match(r'^-?\d+(\.\d{2})$', value):
@@ -47,12 +47,12 @@ def is_valid_float(float_str):
         elif re.match(r'^-?\d{1,3}(?:,\d{3})*\.\d{2}$', float_str):
             return True
         # Check for plain formats (e.g., -1000.23 or 1000.23 or -1000,23 or 1000,23)
-        elif re.match(r'^-?\d+(\.\d{2})$', float_str) or re.match(r'^-?\d+(\,\d{2})$', float_str):
+        elif re.match(r'^-?\d+(\.\d{2})$', float_str) or re.match(r'^-?\d+(,\d{2})$', float_str):
             return True
-        display_message('red', f"The 'cost' column is not in a valid float format.")
+        display_message('red', f"The 'amount' column is not in a valid float format.")
         return False
     except ValueError:
-        display_message('red', f"The 'cost' column is not in a valid float format.")
+        display_message('red', f"The 'amount' column is not in a valid float format.")
         return False
 
 
@@ -81,9 +81,9 @@ def read_strs_to_del(json_path='json/delete_list.json'):
     return to_del_list
 
 
-def invert_costs(df, cost_column):
-    """Invert the sign of the cost column in the DataFrame."""
-    df[cost_column] = -df[cost_column]
+def invert_amounts(df, amount_column):
+    """Invert the sign of the amount column in the DataFrame."""
+    df[amount_column] = -df[amount_column]
     return df
 
 

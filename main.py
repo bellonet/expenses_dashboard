@@ -86,12 +86,12 @@ def manage_sidebar_categories(categories_dict):
 def display_data(df):
     st.dataframe(df)
     utils_df.save_df_to_csv(df)
-    df = utils.invert_costs(df, ColumnNames.COST)
+    df = utils.invert_amounts(df, ColumnNames.AMOUNT)
     plots.display_summary_metrics(df)
 
     category_color_map = plots.generate_color_map(df, ColumnNames.CATEGORY)
 
-    df_grouped = df.groupby(ColumnNames.CATEGORY)[ColumnNames.COST].sum().reset_index()
+    df_grouped = df.groupby(ColumnNames.CATEGORY)[ColumnNames.AMOUNT].sum().reset_index()
 
     if not df_grouped.empty:
         plot_pie_chart(df_grouped, category_color_map)

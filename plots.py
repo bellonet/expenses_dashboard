@@ -12,7 +12,7 @@ def generate_color_map(df, column):
 
 def display_summary_metrics(df):
     # Calculate the total expenses
-    total_expenses = df[ColumnNames.COST].sum()
+    total_expenses = df[ColumnNames.AMOUNT].sum()
 
     min_date, max_date = utils_df.get_min_max_date(df)
 
@@ -35,7 +35,7 @@ def plot_pie_chart(df_grouped, category_color_map):
     st.markdown("<br>", unsafe_allow_html=True)
     fig = px.pie(
         df_grouped,
-        values=ColumnNames.COST,
+        values=ColumnNames.AMOUNT,
         names=ColumnNames.CATEGORY,
         width=1000,
         height=1000,
@@ -77,12 +77,12 @@ def plot_bar_chart(monthly_expenses, category_color_map):
     fig = px.bar(
         monthly_expenses,
         x='month',
-        y=ColumnNames.COST,
+        y=ColumnNames.AMOUNT,
         color='cate',
         title='Monthly Expenses by Category',
-        labels={'month': 'Month', ColumnNames.COST: 'Expenses (€)'},
+        labels={'month': 'Month', ColumnNames.AMOUNT: 'Expenses (€)'},
         height=600,
-        text=ColumnNames.COST,
+        text=ColumnNames.AMOUNT,
         category_orders={'cate': list(monthly_expenses['cate'].cat.categories)},
         color_discrete_map=category_color_map
     )
@@ -106,7 +106,7 @@ def plot_bar_chart(monthly_expenses, category_color_map):
     )
 
     for month, group in monthly_expenses.groupby('month'):
-        total_expenses = group[ColumnNames.COST].sum()
+        total_expenses = group[ColumnNames.AMOUNT].sum()
         fig.add_annotation(
             x=month,
             y=total_expenses,

@@ -1,6 +1,6 @@
 def get_column_names_query(names):
     query = (f'For the following column names, output only the one (not a list) best column names that correspond to '
-             f'"cost", "date" and "text" in a form of a dictionary. \n\n{"\n".join(names)}')
+             f'"amount", "date" and "text" in a form of a dictionary. \n\n{"\n".join(names)}')
     return query
 
 
