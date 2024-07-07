@@ -25,6 +25,9 @@ def set_st():
         '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
         , unsafe_allow_html=True)
 
+    # if 'is_run_merchant' not in st.session_state:
+    #     st.session_state.is_run_ai_merchant = True
+
 
 def set_footer():
     footer = f"""
@@ -71,7 +74,6 @@ def manage_sidebar_categories(categories_dict):
                                                       value=st.session_state[f'checkbox_{category}'],
                                                       key=f'checkbox_{category}')
 
-    # Input for adding new categories
     new_category = st.sidebar.text_input("Add new category")
     if st.sidebar.button("Add Category"):
         sorted_categories = utils.add_new_category(categories_dict, new_category)
@@ -118,16 +120,16 @@ if all_dfs:
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = utils_df.concatenate_dfs(valid_dfs)
-#
-#         df = utils_df.make_merchant_column(df, ai_config, ai_client)
-#         utils_df.add_categories_to_df(df, categories_dict)
+
+        #df = utils_df.add_merchants(df, ai_config, ai_client)
+        # utils_df.add_categories_to_df(df, categories_dict)
 #
 #         date_filtered_df = utils_df.apply_date_filter(df)
 #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
 #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
 #         df = utils_df.delete_rows(df, to_del_substr_l)
 #
-        if not df.empty:
-            display_data(df)
+        # if not df.empty:
+        #     display_data(df)
 #
 # set_footer()

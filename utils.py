@@ -11,6 +11,8 @@ from constants import Globals
 
 
 def str_to_float(value):
+    if isinstance(value, float):
+        return value
     if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', value):
         # German format (e.g., -1.000,23 or 1.000,23)
         value = value.replace('.', '').replace(',', '.')

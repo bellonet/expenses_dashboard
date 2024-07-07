@@ -186,22 +186,45 @@ def delete_rows(df, to_del_list):
 
 
 def upload_csvs_to_dfs():
-    csv_files = st.file_uploader("Upload CSV files - bank statements, credit card statements, etc.",
-                                 accept_multiple_files=True, type=['csv'])
-    all_dfs = []
-    for f in csv_files:
-        try:
-            df = pd.read_csv(f)
-            all_dfs.append(df)
-        except Exception as e:
-            st.error(f"Error processing {f.name}: {e}")
-    return all_dfs
+
+    if 'uploaded' not in st.session_state:
+        set_upload_csv_state()
+
+    if not st.session_state.uploaded:
+        csv_files = st.file_uploader("Upload CSV files - bank statements, credit card statements, etc.",
+                                     accept_multiple_files=True, type=['csv'])
+
+        if csv_files:
+            for f in csv_files:
+                try:
+                    df = pd.read_csv(f)
+                    st.session_state.all_dfs.append(df)
+                    st.session_state.uploaded_files.append(f.name)
+                except Exception as e:
+                    st.error(f"Error processing {f.name}: {e}")
+            st.session_state.uploaded = True
+            st.rerun()
+
+    else:
+        st.write(f"Uploaded files: {' '.join(st.session_state.uploaded_files)}")
+
+        if st.button("Start Over"):
+            set_upload_csv_state()
+            st.experimental_rerun()
+
+    return st.session_state.all_dfs
+
+
+def set_upload_csv_state():
+    st.session_state.uploaded = False
+    st.session_state.all_dfs = []
+    st.session_state.uploaded_files = []
 
 
 def concatenate_dfs(dfs):
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
-        utils.display_message(Colors.PRIMARY_COLOR, "Created a merged and formatted table.")
+        st.write("Created a merged and formatted table.")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')
@@ -227,14 +250,18 @@ def get_monthly_expense_df(df, df_grouped):
     return monthly_expenses
 
 
-# create a function that makes a merchant column in the dataframe:
 def add_merchants(df, ai_config, client):
+    # if st.session_state.is_run_ai_merchant:
     for i in range(4):
         mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '') | (df[ColumnNames.MERCHANT] == ',')
         texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
         if texts_list:
             df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
 
-    st.dataframe(df)
     df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
+
+    # st.session_state.is_run_ai_merchant = False
+    # st.session_state.current_df = df
+
+    df = st.data_editor(df)
     return df
