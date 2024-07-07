@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 import re
-from constants import ColumnNames, Colors
+from constants import ColumnNames, Colors, Globals
 import utils
 import utils_ai
 import ai_queries
@@ -13,14 +13,23 @@ def col_str_to_float(df, col=ColumnNames.COST):
     return df
 
 
+def find_alternative_date(row, df):
+    for column in df.columns:
+        temp_date = pd.to_datetime(row[column], format=Globals.DATE_FORMAT, errors='coerce')
+        if pd.notna(temp_date):
+            return temp_date
+    return None
+
+
 def col_str_to_date(df, col=ColumnNames.DATE):
-    df[col] = pd.to_datetime(df[col], format='%d.%m.%Y', errors='coerce')
-    df[col] = df[col].dt.strftime('%d.%m.%Y')
+    df[col] = pd.to_datetime(df[col], format=Globals.DATE_FORMAT, errors='coerce')
+    df[col] = df.apply(lambda row: find_alternative_date(row, df) if pd.isna(row[col]) else row[col], axis=1)
+    df[col] = df[col].apply(lambda x: x.strftime(Globals.DATE_FORMAT) if not pd.isna(x) else x)
     df[col] = df[col].ffill()
     return df
 
 
-def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format='%d.%m.%Y'):
+def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format=Globals.DATE_FORMAT):
     return pd.to_datetime(df[col], format=date_format, errors='coerce')
 
 
@@ -112,16 +121,22 @@ def add_missing_columns(df, new_columns):
     return df
 
 
+def rename_columns(df, ai_config, client, i):
+    df = ai_rename_columns(df, ai_config, client)
+    df = add_missing_columns(df, ColumnNames.additional_columns_as_list())
+    if not all(col in df.columns for col in ColumnNames.initial_columns_as_list()):
+        manual_rename_columns(df, i)
+    return df
+
+
 def format_columns_all_dfs(dfs, container, ai_config, client):
     clean_dfs = []
     with (container()):
         for i, df in enumerate(dfs):
-            df = ai_rename_columns(df, ai_config, client)
-            df = add_missing_columns(df, ColumnNames.additional_columns_as_list())
-            if not all(col in df.columns for col in ColumnNames.initial_columns_as_list()):
-                manual_rename_columns(df, i)
-
-            if all(col in df.columns for col in ColumnNames.initial_columns_as_list()) and len(df.columns) == len(set(df.columns)):
+            df = rename_columns(df, ai_config, client, i)
+            if all(col in df.columns for col in ColumnNames.initial_columns_as_list()
+                   ) and len(df.columns) == len(set(df.columns)):
+                df = format_df(df)
                 clean_df = df[ColumnNames.as_list()]
                 clean_dfs.append(clean_df)
         return clean_dfs
@@ -136,7 +151,6 @@ def get_min_max_date(df):
 def filter_df_by_date_range(df):
 
     min_date, max_date = get_min_max_date(df)
-
     date_range = st.sidebar.date_input("Select date range:", [min_date, max_date])
 
     if len(date_range) == 2:
@@ -187,8 +201,7 @@ def upload_csvs_to_dfs():
 def concatenate_dfs(dfs):
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
-        df = format_df(df)
-        utils.display_message(Colors.PRIMARY_COLOR, "Created a formated and merged table!")
+        utils.display_message(Colors.PRIMARY_COLOR, "Created a merged and formatted table.")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')

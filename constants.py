@@ -45,6 +45,10 @@ class Colors:
     SECONDARY_TEXT = "#a1a1a1"
 
 
+class Globals:
+    DATE_FORMAT = '%d.%m.%Y'  # Standard date format used throughout the application
+
+
 class OpenAIConfig:
     # MODEL = "gpt-4o"
     MODEL = "gpt-3.5-turbo-0125"
