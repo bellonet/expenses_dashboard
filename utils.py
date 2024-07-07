@@ -7,6 +7,7 @@ from collections import OrderedDict
 import ast
 import utils_ai
 import ai_queries
+from constants import Globals
 
 
 def str_to_float(value):
@@ -107,36 +108,44 @@ def manually_match_merchants_and_chunk(merchants, chunk):
     return matched_merchants
 
 
-def get_merchants_from_text_chatgpt(texts_list, ai_config, client):
+def log_mismatch_to_txt(chunk, merchants):
+    with open(Globals.LOG_MERCHANT_MISMATCH_PATH, 'a') as f:
+        f.write('Chunk:\n')
+        f.write('\n'.join(chunk))
+        f.write('\n\nMerchants:\n')
+        f.write('\n'.join(merchants))
+        f.write('\n\n')
+
+
+def process_chunk(chunk, ai_config, client):
+    query = ai_queries.get_merchants_query(chunk)
+    merchants_str = utils_ai.query_ai(query, ai_config, client)
+    merchants = merchants_str.strip().splitlines()
+
+    if len(merchants) != len(chunk):
+        logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
+        merchants = manually_match_merchants_and_chunk(merchants, chunk)
+        log_mismatch_to_txt(chunk, merchants)
+
+    return merchants
+
+
+def ai_get_merchants_from_text(texts_list, ai_config, client):
     message_placeholder = st.empty()
     message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
                               f"It's good time to make a coffee or go to the pull-up bar."))
+    logging.info("Starting ai merchant extraction process.")
+
     all_merchants = []
 
     chunks = chunk_texts(texts_list, ai_config.CHUNK_SIZE)
 
     for chunk in chunks:
-
-        query = ai_queries.get_merchants_query(chunk)
-
-        merchants_str = utils_ai.query_ai(query, ai_config, client)
-        merchants = merchants_str.strip().splitlines()
-
-        if len(merchants) != len(chunk):
-            logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
-            merchants = manually_match_merchants_and_chunk(merchants, chunk)
-            print(merchants)
-
-            with open('bad_chunk_gemini.txt', 'a') as f:
-                f.write('Chunk:\n')
-                f.write('\n'.join(chunk))
-                f.write('\n\nMerchants:\n')
-                f.write('\n'.join(merchants))
-                f.write('\n\n')
-
+        merchants = process_chunk(chunk, ai_config, client)
         all_merchants.extend(merchants)
 
     all_merchants = [re.sub(r'^[\d.-]*\s*', '', merchant) for merchant in all_merchants]
+    logging.info("ai merchant extraction completed.")
 
     message_placeholder.empty()
     return all_merchants
