@@ -24,12 +24,11 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-
-- genAI - set quotas.
-- AI add merchant column - only if it is not present.
-- AI add category column - only if it is not present.
+- disable ai api calls after function ran once - change session state
+- Add functionality to inplace edit table merchant names.
 - Create functionality of category edits - add and delete.
 - Add rows to categories functionality.
 - Save categories json function.
 - Add per category per merchant plot.
 - Add number of transactions per category plot.
+- genAI - set quotas.
