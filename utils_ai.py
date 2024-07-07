@@ -19,11 +19,10 @@ def query_chatgpt(query, client):
         model=OpenAIConfig.MODEL,
         messages=messages,
     )
-    response_formatted = response.choices[0].message.content.strip().split("\n")
+    response_formatted = response.choices[0].message.content
     return response_formatted
 
 
 def query_genai(query, config):
-    response = config.MODEL.generate_content(query)
-    response_formatted = response.text.splitlines()
-    return response_formatted
+    response = config.MODEL.generate_content(query).text
+    return response

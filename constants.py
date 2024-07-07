@@ -6,20 +6,25 @@ class ColumnNames:
     DATE = 'date'
     TEXT = 'text'
     COST = 'cost'
+    MERCHANT = 'merchant'
     CATEGORY = 'category'
 
     @classmethod
     def as_list(cls):
-        return [cls.DATE, cls.TEXT, cls.COST, cls.CATEGORY]
-
-    @classmethod
-    def as_set(cls):
-        return {cls.DATE, cls.TEXT, cls.COST, cls.CATEGORY}
+        return [cls.DATE, cls.TEXT, cls.COST, cls.MERCHANT, cls.CATEGORY]
 
     @classmethod
     def as_str(cls):
         # Returns column names as a formatted string with single quotes and commas
         return ", ".join(f"'{name}'" for name in cls.as_list())
+
+    @classmethod
+    def initial_columns_as_list(cls):
+        return [cls.DATE, cls.TEXT, cls.COST]
+
+    @classmethod
+    def additional_columns_as_list(cls):
+        return [cls.MERCHANT, cls.CATEGORY]
 
 
 class PlotSettings:

@@ -114,20 +114,20 @@ all_dfs = utils_df.upload_csvs_to_dfs()
 placeholder = st.empty()
 
 if all_dfs:
-    valid_dfs = utils_df.rename_columns_all_dfs(all_dfs, placeholder.container)
+    valid_dfs = utils_df.format_columns_all_dfs(all_dfs, placeholder.container, ai_config, ai_client)
     if len(valid_dfs) == len(all_dfs):
         placeholder.empty()
         df = utils_df.concatenate_dfs(valid_dfs)
-
-        df = utils_df.make_merchant_column(df, ai_config, ai_client)
-        utils_df.add_categories_to_df(df, categories_dict)
-
-        date_filtered_df = utils_df.apply_date_filter(df)
-        selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
-        df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
-        df = utils_df.delete_rows(df, to_del_substr_l)
-
+#
+#         df = utils_df.make_merchant_column(df, ai_config, ai_client)
+#         utils_df.add_categories_to_df(df, categories_dict)
+#
+#         date_filtered_df = utils_df.apply_date_filter(df)
+#         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
+#         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
+#         df = utils_df.delete_rows(df, to_del_substr_l)
+#
         if not df.empty:
             display_data(df)
-
-set_footer()
+#
+# set_footer()

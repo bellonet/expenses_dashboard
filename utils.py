@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import json
 from collections import OrderedDict
+import ast
 import utils_ai
 import ai_queries
 
@@ -118,7 +119,8 @@ def get_merchants_from_text_chatgpt(texts_list, ai_config, client):
 
         query = ai_queries.get_merchants_query(chunk)
 
-        merchants = utils_ai.query_ai(query, ai_config, client)
+        merchants_str = utils_ai.query_ai(query, ai_config, client)
+        merchants = merchants_str.strip().splitlines()
 
         if len(merchants) != len(chunk):
             logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
@@ -138,3 +140,13 @@ def get_merchants_from_text_chatgpt(texts_list, ai_config, client):
 
     message_placeholder.empty()
     return all_merchants
+
+
+def get_flipped_dict_from_string(string):
+    # Extract the dictionary string
+    start = string.find('{')
+    end = string.find('}') + 1
+    dict_str = string[start:end]
+    d = ast.literal_eval(dict_str)
+    flipped_dict = {value: key for key, value in d.items()}
+    return flipped_dict

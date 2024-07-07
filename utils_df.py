@@ -4,6 +4,8 @@ import numpy as np
 import re
 from constants import ColumnNames, Colors
 import utils
+import utils_ai
+import ai_queries
 
 
 def col_str_to_float(df, col=ColumnNames.COST):
@@ -58,19 +60,18 @@ def get_allowed_columns(col, allowed_cols):
     return allowed_cols
 
 
-def rename_columns(df, idx):
-
-    if ColumnNames.CATEGORY not in df.columns:
-        df[ColumnNames.CATEGORY] = ''
+def manual_rename_columns(df, idx):
 
     cols = st.columns(len(df.columns))
     new_columns = []
 
     for i, col in enumerate(df.columns):
-        if col == ColumnNames.CATEGORY:
+        if col == ColumnNames.MERCHANT:
+            allowed_cols = [ColumnNames.MERCHANT]
+        elif col == ColumnNames.CATEGORY:
             allowed_cols = [ColumnNames.CATEGORY]
         else:
-            allowed_cols = [c for c in get_allowed_columns(col, ColumnNames.as_list()) if c != ColumnNames.CATEGORY]
+            allowed_cols = [c for c in get_allowed_columns(col, ColumnNames.initial_columns_as_list())]
 
         with cols[i]:
             new_col = st.selectbox(f"Rename '{col}'", options=allowed_cols,
@@ -95,13 +96,32 @@ def rename_columns(df, idx):
     st.dataframe(df.head())
 
 
-def rename_columns_all_dfs(dfs, container):
+def ai_rename_columns(df, ai_config, client):
+    column_names = df.columns
+    query = ai_queries.get_column_names_query(column_names)
+    column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
+    column_names_dict = utils.get_flipped_dict_from_string(column_name_dict_as_str)
+    df = df.rename(columns=column_names_dict)
+    return df
+
+
+def add_missing_columns(df, new_columns):
+    for col in new_columns:
+        if col not in df.columns:
+            df[col] = ''
+    return df
+
+
+def format_columns_all_dfs(dfs, container, ai_config, client):
     clean_dfs = []
-    with container():
+    with (container()):
         for i, df in enumerate(dfs):
-            df = auto_rename_columns(df)
-            rename_columns(df, i)
-            if all(col in df.columns for col in ColumnNames.as_set()) and len(df.columns) == len(set(df.columns)):
+            df = ai_rename_columns(df, ai_config, client)
+            df = add_missing_columns(df, ColumnNames.additional_columns_as_list())
+            if not all(col in df.columns for col in ColumnNames.initial_columns_as_list()):
+                manual_rename_columns(df, i)
+
+            if all(col in df.columns for col in ColumnNames.initial_columns_as_list()) and len(df.columns) == len(set(df.columns)):
                 clean_df = df[ColumnNames.as_list()]
                 clean_dfs.append(clean_df)
         return clean_dfs
