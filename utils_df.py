@@ -229,9 +229,12 @@ def get_monthly_expense_df(df, df_grouped):
 
 # create a function that makes a merchant column in the dataframe:
 def add_merchants(df, ai_config, client):
-    for i in range(3):
-        mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '')
+    for i in range(4):
+        mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '') | (df[ColumnNames.MERCHANT] == ',')
         texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
         if texts_list:
             df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
+
+    st.dataframe(df)
+    df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
     return df

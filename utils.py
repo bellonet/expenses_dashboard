@@ -151,6 +151,18 @@ def ai_get_merchants_from_text(texts_list, ai_config, client):
     return all_merchants
 
 
+def standardize_merchant_names(merchants):
+    merchants = [merchant.lower() for merchant in merchants]
+    merchants = [merchant.split(' gmbh')[0] for merchant in merchants]
+    for n in range(1, 5):
+        n_worded_strs = {merchant.lower() for merchant in merchants if len(merchant.split()) == n}
+        for s in n_worded_strs:
+            for i, merchant in enumerate(merchants):
+                if merchant.lower().startswith(s):
+                    merchants[i] = s
+    return merchants
+
+
 def get_flipped_dict_from_string(string):
     # Extract the dictionary string
     start = string.find('{')
