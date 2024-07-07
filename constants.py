@@ -1,5 +1,6 @@
 from openai import OpenAI
 import google.generativeai as genai
+import os
 
 
 class ColumnNames:
@@ -46,7 +47,8 @@ class Colors:
 
 
 class Globals:
-    DATE_FORMAT = '%d.%m.%Y'  # Standard date format used throughout the application
+    DATE_FORMAT = '%d.%m.%Y'
+    LOG_MERCHANT_MISMATCH_PATH = os.path.join('logs', 'ai_merchant_mismatch.log')
 
 
 class OpenAIConfig:
