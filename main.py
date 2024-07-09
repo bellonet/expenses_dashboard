@@ -1,7 +1,7 @@
 import streamlit as st
 import utils_html
 import logging
-
+import pandas as pd
 import plots
 import utils
 import utils_df
@@ -25,8 +25,8 @@ def set_st():
         '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
         , unsafe_allow_html=True)
 
-    # if 'is_run_merchant' not in st.session_state:
-    #     st.session_state.is_run_ai_merchant = True
+    if 'is_ran_merchant' not in st.session_state:
+        st.session_state.is_ran_merchant = False
 
 
 def set_footer():
@@ -112,24 +112,29 @@ categories_dict = utils.read_categories()
 to_del_substr_l = utils.read_strs_to_del()
 
 set_st()
-all_dfs = utils_df.upload_csvs_to_dfs()
-placeholder = st.empty()
+if 'current_df' in st.session_state:
+    df = st.session_state.current_df
+else:
+    df = pd.DataFrame()
+    all_dfs = utils_df.upload_csvs_to_dfs()
+    placeholder = st.empty()
 
-if all_dfs:
-    valid_dfs = utils_df.format_columns_all_dfs(all_dfs, placeholder.container, ai_config, ai_client)
-    if len(valid_dfs) == len(all_dfs):
-        placeholder.empty()
-        df = utils_df.concatenate_dfs(valid_dfs)
+    if all_dfs:
+        valid_dfs = utils_df.format_columns_all_dfs(all_dfs, placeholder.container, ai_config, ai_client)
+        if len(valid_dfs) == len(all_dfs):
+            placeholder.empty()
+            df = utils_df.concatenate_dfs(valid_dfs)
 
-        #df = utils_df.add_merchants(df, ai_config, ai_client)
-        # utils_df.add_categories_to_df(df, categories_dict)
-#
-#         date_filtered_df = utils_df.apply_date_filter(df)
-#         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
-#         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
-#         df = utils_df.delete_rows(df, to_del_substr_l)
-#
-        # if not df.empty:
-        #     display_data(df)
-#
-# set_footer()
+if not df.empty:
+    df = utils_df.add_merchants(df, ai_config, ai_client)
+            # utils_df.add_categories_to_df(df, categories_dict)
+    #
+    #         date_filtered_df = utils_df.apply_date_filter(df)
+    #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
+    #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
+    #         df = utils_df.delete_rows(df, to_del_substr_l)
+    #
+            # if not df.empty:
+            #     display_data(df)
+    #
+    # set_footer()

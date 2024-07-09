@@ -24,11 +24,12 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-- disable ai api calls after function ran once - change session state
-- Add functionality to inplace edit table merchant names.
+- Go over flow until merchants to see if all messages and user inputs are clear.
+- check why some merchants are missing after ai call.
 - Create functionality of category edits - add and delete.
 - Add rows to categories functionality.
 - Save categories json function.
 - Add per category per merchant plot.
 - Add number of transactions per category plot.
+- Set up a streamlit server.
 - genAI - set quotas.

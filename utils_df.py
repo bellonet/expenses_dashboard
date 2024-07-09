@@ -187,10 +187,10 @@ def delete_rows(df, to_del_list):
 
 def upload_csvs_to_dfs():
 
-    if 'uploaded' not in st.session_state:
+    if 'is_uploaded' not in st.session_state:
         set_upload_csv_state()
 
-    if not st.session_state.uploaded:
+    if not st.session_state.is_uploaded:
         csv_files = st.file_uploader("Upload CSV files - bank statements, credit card statements, etc.",
                                      accept_multiple_files=True, type=['csv'])
 
@@ -202,7 +202,7 @@ def upload_csvs_to_dfs():
                     st.session_state.uploaded_files.append(f.name)
                 except Exception as e:
                     st.error(f"Error processing {f.name}: {e}")
-            st.session_state.uploaded = True
+            st.session_state.is_uploaded = True
             st.rerun()
 
     else:
@@ -216,7 +216,7 @@ def upload_csvs_to_dfs():
 
 
 def set_upload_csv_state():
-    st.session_state.uploaded = False
+    st.session_state.is_uploaded = False
     st.session_state.all_dfs = []
     st.session_state.uploaded_files = []
 
@@ -251,17 +251,18 @@ def get_monthly_expense_df(df, df_grouped):
 
 
 def add_merchants(df, ai_config, client):
-    # if st.session_state.is_run_ai_merchant:
-    for i in range(4):
-        mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '') | (df[ColumnNames.MERCHANT] == ',')
-        texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
-        if texts_list:
-            df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
 
-    df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
+    if not st.session_state.is_ran_merchant:
+        for i in range(4):
+            mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '') | (df[ColumnNames.MERCHANT] == ',')
+            texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
+            if texts_list:
+                df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
 
-    # st.session_state.is_run_ai_merchant = False
-    # st.session_state.current_df = df
+            df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
+
+        st.session_state.is_ran_merchant = True
+        st.session_state.current_df = df
 
     df = st.data_editor(df)
     return df
