@@ -109,7 +109,7 @@ def ai_rename_columns(df, ai_config, client):
     column_names = df.columns
     query = ai_queries.get_column_names_query(column_names)
     column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
-    column_names_dict = utils.get_flipped_dict_from_string(column_name_dict_as_str)
+    column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
     df = df.rename(columns=column_names_dict)
     return df
 
@@ -254,12 +254,17 @@ def add_merchants(df, ai_config, client):
 
     if not st.session_state.is_ran_merchant:
         for i in range(4):
-            mask = df[ColumnNames.MERCHANT].isna() | (df[ColumnNames.MERCHANT] == '') | (df[ColumnNames.MERCHANT] == ',')
+            mask = (df[ColumnNames.MERCHANT].isna() |
+                    (df[ColumnNames.MERCHANT] == '') |
+                    (df[ColumnNames.MERCHANT] == ','))
             texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
             if texts_list:
                 df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
 
             df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
+
+        df[ColumnNames.MERCHANT] = utils.ai_standardize_merchant_names(df[ColumnNames.MERCHANT].tolist(),
+                                                                       ai_config, client)
 
         st.session_state.is_ran_merchant = True
         st.session_state.current_df = df

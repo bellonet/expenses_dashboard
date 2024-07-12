@@ -127,14 +127,14 @@ else:
 
 if not df.empty:
     df = utils_df.add_merchants(df, ai_config, ai_client)
-            # utils_df.add_categories_to_df(df, categories_dict)
+    # utils_df.add_categories_to_df(df, categories_dict)
     #
     #         date_filtered_df = utils_df.apply_date_filter(df)
     #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
     #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
     #         df = utils_df.delete_rows(df, to_del_substr_l)
     #
-            # if not df.empty:
-            #     display_data(df)
+    # if not df.empty:
+    #     display_data(df)
     #
     # set_footer()

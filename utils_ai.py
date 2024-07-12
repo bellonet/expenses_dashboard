@@ -1,4 +1,5 @@
 from constants import OpenAIConfig, GenAIConfig
+import re
 
 
 def query_ai(query, config, client):
@@ -19,10 +20,17 @@ def query_chatgpt(query, client):
         model=OpenAIConfig.MODEL,
         messages=messages,
     )
-    response_formatted = response.choices[0].message.content
-    return response_formatted
+
+    response = response.choices[0].message.content
+    response = re.sub(r"(\w)'(\w)", r"\1\2", response)
+    return response
 
 
 def query_genai(query, config):
-    response = config.MODEL.generate_content(query).text
+    response = config.MODEL.generate_content(query, generation_config=GenAIConfig.GENERATION_CONFIG).text
+    response = re.sub(r"(\w)'(\w)", r"\1\2", response)
+    # Output response to log file:
+    with open('temp.log', 'a') as f:
+        f.write(f"Query: {query}\n")
+        f.write(f"Response: {response}\n\n")
     return response

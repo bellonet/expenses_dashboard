@@ -49,6 +49,7 @@ class Colors:
 class Globals:
     DATE_FORMAT = '%d.%m.%Y'
     LOG_MERCHANT_MISMATCH_PATH = os.path.join('logs', 'ai_merchant_mismatch.log')
+    MERCHANTS_MAX_WORDS = 7
 
 
 class OpenAIConfig:
@@ -65,7 +66,10 @@ class OpenAIConfig:
 
 class GenAIConfig:
     MODEL = genai.GenerativeModel("gemini-1.5-flash")
+    TEMPERATURE = 0.2
     CHUNK_SIZE = 40
+
+    GENERATION_CONFIG = genai.types.GenerationConfig(temperature=TEMPERATURE)
 
     @classmethod
     def set_client(cls):

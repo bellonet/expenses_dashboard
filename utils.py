@@ -119,16 +119,25 @@ def log_mismatch_to_txt(chunk, merchants):
         f.write('\n\n')
 
 
-def process_chunk(chunk, ai_config, client):
+def get_merchant_chunk(chunk, ai_config, client):
     query = ai_queries.get_merchants_query(chunk)
     merchants_str = utils_ai.query_ai(query, ai_config, client)
     merchants = merchants_str.strip().splitlines()
+
+    merchants = [re.sub(r'^[\d.-]*\s*|\*+$', '', merchant) for merchant in merchants]
+    merchants = delete_merchants_from_chunk(merchants)
 
     if len(merchants) != len(chunk):
         logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
         merchants = manually_match_merchants_and_chunk(merchants, chunk)
         log_mismatch_to_txt(chunk, merchants)
 
+    return merchants
+
+
+def delete_merchants_from_chunk(merchants):
+    merchants = [item for item in merchants if len(item.split()) < Globals.MERCHANTS_MAX_WORDS]
+    merchants = [item for item in merchants if item != '']
     return merchants
 
 
@@ -143,18 +152,28 @@ def ai_get_merchants_from_text(texts_list, ai_config, client):
     chunks = chunk_texts(texts_list, ai_config.CHUNK_SIZE)
 
     for chunk in chunks:
-        merchants = process_chunk(chunk, ai_config, client)
+
+        merchants = get_merchant_chunk(chunk, ai_config, client)
         all_merchants.extend(merchants)
 
-    all_merchants = [re.sub(r'^[\d.-]*\s*', '', merchant) for merchant in all_merchants]
     logging.info("ai merchant extraction completed.")
 
     message_placeholder.empty()
     return all_merchants
 
 
+def get_dict_from_string(string, flip=False):
+    start = string.find('{')
+    end = string.find('}') + 1
+    dict_str = string[start:end]
+    d = ast.literal_eval(dict_str)
+    if flip:
+        d = {value: key for key, value in d.items()}
+    return d
+
+
 def standardize_merchant_names(merchants):
-    merchants = [merchant.lower() for merchant in merchants]
+    merchants = [merchant.lower().strip().replace(',', '').replace("'", '') for merchant in merchants]
     merchants = [merchant.split(' gmbh')[0] for merchant in merchants]
     for n in range(1, 5):
         n_worded_strs = {merchant.lower() for merchant in merchants if len(merchant.split()) == n}
@@ -165,11 +184,22 @@ def standardize_merchant_names(merchants):
     return merchants
 
 
-def get_flipped_dict_from_string(string):
-    # Extract the dictionary string
-    start = string.find('{')
-    end = string.find('}') + 1
-    dict_str = string[start:end]
-    d = ast.literal_eval(dict_str)
-    flipped_dict = {value: key for key, value in d.items()}
-    return flipped_dict
+def standardize_merchant_chunk(chunk, ai_config, client):
+    query = ai_queries.get_standardize_merchants_query(chunk)
+    standardized_merchants_str = utils_ai.query_ai(query, ai_config, client)
+    standardized_merchants_dict = get_dict_from_string(standardized_merchants_str)
+    return standardized_merchants_dict
+
+
+def ai_standardize_merchant_names(merchants, ai_config, client):
+    merchants_as_set_list = sorted(list(set(merchants)))
+    chunks = chunk_texts(merchants_as_set_list, ai_config.CHUNK_SIZE)
+    standardized_merchants_dict = {}
+
+    for chunk in chunks:
+        standardized_merchants_dict.update(standardize_merchant_chunk(chunk, ai_config, client))
+
+    standardized_merchants = [standardized_merchants_dict[merchant] if merchant in standardized_merchants_dict and
+                              len(standardized_merchants_dict[merchant]) <= len(merchant) else merchant
+                              for merchant in merchants]
+    return standardized_merchants

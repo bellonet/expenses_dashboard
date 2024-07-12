@@ -17,3 +17,10 @@ def get_merchants_query(chunk):
              f'output the name of the merchant the payment is associated with, not the payment gateway itself.'
              f'\n\n{"\n".join(chunk)}')
     return query
+
+
+def get_standardize_merchants_query(merchants_set):
+    query = (f'for the following list, correct the merchant name to be the actual business name. '
+             f"Don't relay on common keywords, but on the actual business name (e.g. find restaurant name)." 
+             f"form your answer as a dictionary (no explanation or comments): \n\n{"\n".join(merchants_set)}")
+    return query
