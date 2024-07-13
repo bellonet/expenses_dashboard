@@ -111,7 +111,7 @@ def manually_match_merchants_and_chunk(merchants, chunk):
 
 
 def log_mismatch_to_txt(chunk, merchants):
-    with open(Globals.LOG_MERCHANT_MISMATCH_PATH, 'a') as f:
+    with open(Globals.LOG_AI_PATH, 'a') as f:
         f.write('Chunk:\n')
         f.write('\n'.join(chunk))
         f.write('\n\nMerchants:\n')
@@ -162,11 +162,7 @@ def get_dict_from_string(string, flip=False):
     end = string.find('}') + 1
     dict_str = string[start:end]
     dict_str = dict_str.replace('null', 'None')
-    try:
-        d = ast.literal_eval(dict_str)
-    except:
-        with open('temp.log', 'a') as f:
-            f.write(dict_str)
+    d = ast.literal_eval(dict_str)
 
     if flip:
         d = {value: key for key, value in d.items()}

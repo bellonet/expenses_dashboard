@@ -1,4 +1,4 @@
-from constants import OpenAIConfig, GenAIConfig
+from constants import OpenAIConfig, GenAIConfig, Globals
 import re
 
 
@@ -29,7 +29,9 @@ def query_chatgpt(query, client):
 def query_genai(query, config):
     response = config.MODEL.generate_content(query, generation_config=GenAIConfig.GENERATION_CONFIG).text
     response = re.sub(r"(\w)'(\w)", r"\1\2", response)
-    with open('temp.log', 'a') as f:
-        f.write(f"Query: {query}\n")
-        f.write(f"Response: {response}\n\n")
+
+    if Globals.DEBUG:
+        with open(Globals.LOG_AI_PATH, 'a') as f:
+            f.write(f"Query: {query}\n")
+            f.write(f"Response: {response}\n\n")
     return response

@@ -5,13 +5,16 @@ import pandas as pd
 import plots
 import utils
 import utils_df
-from constants import ColumnNames, Colors, get_ai_config
+from constants import ColumnNames, Colors, get_ai_config, Globals
 from plots import plot_pie_chart, plot_bar_chart
 
 
 def set_logger():
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    if Globals.DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
     return logger
 
 

@@ -47,14 +47,14 @@ class Colors:
 
 
 class Globals:
+    DEBUG = True
     DATE_FORMAT = '%d.%m.%Y'
-    LOG_MERCHANT_MISMATCH_PATH = os.path.join('logs', 'ai_merchant_mismatch.log')
+    LOG_AI_PATH = os.path.join('logs', 'ai.log')
     MERCHANTS_MAX_WORDS = 7
 
 
 class OpenAIConfig:
-    # MODEL = "gpt-4o"
-    MODEL = "gpt-3.5-turbo-0125"
+    MODEL = "gpt-3.5-turbo-0125"  # "gpt-4o"
     CHUNK_SIZE = 15
 
     @classmethod
@@ -66,8 +66,12 @@ class OpenAIConfig:
 
 class GenAIConfig:
     MODEL = genai.GenerativeModel("gemini-1.5-flash")
-    TEMPERATURE = 0.2
     CHUNK_SIZE = 40
+
+    if Globals.DEBUG:
+        TEMPERATURE = 1
+    else:
+        TEMPERATURE = 0.2
 
     GENERATION_CONFIG = genai.types.GenerationConfig(temperature=TEMPERATURE)
 
