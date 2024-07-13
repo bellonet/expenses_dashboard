@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 import re
+import logging
 from constants import ColumnNames, Colors, Globals
 import utils
 import utils_ai
@@ -250,21 +251,33 @@ def get_monthly_expense_df(df, df_grouped):
     return monthly_expenses
 
 
+def ai_add_and_standardize_merchants(df, ai_config, client):
+    message_placeholder = st.empty()
+    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
+                              f"It's good time to make a coffee or go to the pull-up bar."))
+    logging.info("Starting ai merchant extraction process.")
+
+    for i in range(4):
+        mask = (df[ColumnNames.MERCHANT].isna() |
+                (df[ColumnNames.MERCHANT] == '') |
+                (df[ColumnNames.MERCHANT] == ','))
+        texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
+        if texts_list:
+            df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
+
+    merchants = df[ColumnNames.MERCHANT].tolist()
+    merchants = utils.standardize_merchant_names(merchants)
+    merchants = utils.ai_standardize_merchant_names(merchants, ai_config, client)
+
+    message_placeholder.empty()
+
+    return merchants
+
+
 def add_merchants(df, ai_config, client):
 
     if not st.session_state.is_ran_merchant:
-        for i in range(4):
-            mask = (df[ColumnNames.MERCHANT].isna() |
-                    (df[ColumnNames.MERCHANT] == '') |
-                    (df[ColumnNames.MERCHANT] == ','))
-            texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
-            if texts_list:
-                df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
-
-            df[ColumnNames.MERCHANT] = utils.standardize_merchant_names(df[ColumnNames.MERCHANT].tolist())
-
-        df[ColumnNames.MERCHANT] = utils.ai_standardize_merchant_names(df[ColumnNames.MERCHANT].tolist(),
-                                                                       ai_config, client)
+        df[ColumnNames.MERCHANT] = ai_add_and_standardize_merchants(df, ai_config, client)
 
         st.session_state.is_ran_merchant = True
         st.session_state.current_df = df

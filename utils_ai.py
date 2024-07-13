@@ -29,7 +29,6 @@ def query_chatgpt(query, client):
 def query_genai(query, config):
     response = config.MODEL.generate_content(query, generation_config=GenAIConfig.GENERATION_CONFIG).text
     response = re.sub(r"(\w)'(\w)", r"\1\2", response)
-    # Output response to log file:
     with open('temp.log', 'a') as f:
         f.write(f"Query: {query}\n")
         f.write(f"Response: {response}\n\n")

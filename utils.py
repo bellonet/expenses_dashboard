@@ -142,10 +142,6 @@ def delete_merchants_from_chunk(merchants):
 
 
 def ai_get_merchants_from_text(texts_list, ai_config, client):
-    message_placeholder = st.empty()
-    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
-                              f"It's good time to make a coffee or go to the pull-up bar."))
-    logging.info("Starting ai merchant extraction process.")
 
     all_merchants = []
 
@@ -158,7 +154,6 @@ def ai_get_merchants_from_text(texts_list, ai_config, client):
 
     logging.info("ai merchant extraction completed.")
 
-    message_placeholder.empty()
     return all_merchants
 
 
@@ -166,7 +161,13 @@ def get_dict_from_string(string, flip=False):
     start = string.find('{')
     end = string.find('}') + 1
     dict_str = string[start:end]
-    d = ast.literal_eval(dict_str)
+    dict_str = dict_str.replace('null', 'None')
+    try:
+        d = ast.literal_eval(dict_str)
+    except:
+        with open('temp.log', 'a') as f:
+            f.write(dict_str)
+
     if flip:
         d = {value: key for key, value in d.items()}
     return d
@@ -199,7 +200,6 @@ def ai_standardize_merchant_names(merchants, ai_config, client):
     for chunk in chunks:
         standardized_merchants_dict.update(standardize_merchant_chunk(chunk, ai_config, client))
 
-    standardized_merchants = [standardized_merchants_dict[merchant] if merchant in standardized_merchants_dict and
-                              len(standardized_merchants_dict[merchant]) <= len(merchant) else merchant
-                              for merchant in merchants]
+    standardized_merchants = [standardized_merchants_dict[merchant]
+                              if merchant in standardized_merchants_dict else merchant for merchant in merchants]
     return standardized_merchants

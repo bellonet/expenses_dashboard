@@ -20,7 +20,7 @@ def get_merchants_query(chunk):
 
 
 def get_standardize_merchants_query(merchants_set):
-    query = (f'for the following list, correct the merchant name to be the actual business name. '
+    query = (f'for the following list, correct the merchant name to be the actual short business name. '
              f"Don't relay on common keywords, but on the actual business name (e.g. find restaurant name)." 
              f"form your answer as a dictionary (no explanation or comments): \n\n{"\n".join(merchants_set)}")
     return query
