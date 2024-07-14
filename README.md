@@ -24,12 +24,14 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-- Go over flow until merchants to see if all messages and user inputs are clear.
-- check why some merchants are missing after ai call.
-- Create functionality of category edits - add and delete.
 - Add rows to categories functionality.
-- Save categories json function.
-- Add per category per merchant plot.
+- Improve user messages/instructions/workflow.
+- Create functionality of category edits - add and delete.
+- Save categories json function?
+- Add per category - merchant as hue plot.
+- Add list of merchants per category.
 - Add number of transactions per category plot.
 - Set up a streamlit server.
 - genAI - set quotas.
+- Test Claude / Llama / Mistral API calls and pricing.
+- Test downloaded LLM model instead of API calls.
