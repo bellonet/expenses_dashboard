@@ -132,7 +132,7 @@ def rename_columns(df, ai_config, client, i):
 
 def format_columns_all_dfs(dfs, container, ai_config, client):
     clean_dfs = []
-    with (container()):
+    with container():
         for i, df in enumerate(dfs):
             df = rename_columns(df, ai_config, client, i)
             if all(col in df.columns for col in ColumnNames.initial_columns_as_list()
