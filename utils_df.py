@@ -251,16 +251,16 @@ def get_monthly_expense_df(df, df_grouped):
     return monthly_expenses
 
 
-def ai_add_and_standardize_merchants(df, ai_config, client):
-    message_placeholder = st.empty()
-    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
-                              f"It's good time to make a coffee or go to the pull-up bar."))
-    logging.info("Starting ai merchant extraction process.")
+def get_df_mask(df, column_name):
+    mask = (df[column_name].isna() |
+            (df[column_name] == '') |
+            (df[column_name] == ','))
+    return mask
 
+
+def ai_add_and_standardize_merchants(df, ai_config, client):
     for i in range(4):
-        mask = (df[ColumnNames.MERCHANT].isna() |
-                (df[ColumnNames.MERCHANT] == '') |
-                (df[ColumnNames.MERCHANT] == ','))
+        mask = get_df_mask(df, ColumnNames.MERCHANT)
         texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
         if texts_list:
             df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
@@ -269,18 +269,50 @@ def ai_add_and_standardize_merchants(df, ai_config, client):
     merchants = utils.standardize_merchant_names(merchants)
     merchants = utils.ai_standardize_merchant_names(merchants, ai_config, client)
 
-    message_placeholder.empty()
-
     return merchants
 
 
-def add_merchants(df, ai_config, client):
+def get_merchants_summary_df(df):
+    merchants_summary_df = df.groupby(ColumnNames.MERCHANT).agg({
+        ColumnNames.AMOUNT: ['mean', 'count'],
+        ColumnNames.CATEGORY: lambda x: x.mode()[0] if not x.mode().empty else np.nan
+    }).reset_index()
+    merchants_summary_df.columns = ['merchant', 'avg_amount', 'num_transactions', 'category']
+    return merchants_summary_df
 
-    if not st.session_state.is_ran_merchant:
+
+def propagate_df_merchant_categories(df):
+    valid_categories = df[~df[ColumnNames.CATEGORY].isin([np.nan, None, ''])]
+    unique_categories = valid_categories.groupby(ColumnNames.MERCHANT)[ColumnNames.CATEGORY].nunique()
+    single_category_merchants = unique_categories[unique_categories == 1].index
+    valid_single_categories = valid_categories[valid_categories[ColumnNames.MERCHANT].isin(single_category_merchants)]
+    merchant_to_category = valid_single_categories.groupby(ColumnNames.MERCHANT)[ColumnNames.CATEGORY].first().to_dict()
+    df[ColumnNames.CATEGORY] = df.apply(lambda row: merchant_to_category.get(row[ColumnNames.MERCHANT],
+                                                                             row[ColumnNames.CATEGORY]), axis=1)
+
+    return df
+
+
+def add_merchants_and_categories(df, ai_config, client):
+    message_placeholder = st.empty()
+    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
+                              f"It's good time to make a coffee or go to the pull-up bar."))
+    logging.info("Starting ai merchant extraction process.")
+
+    if not st.session_state.is_ran_ai:
         df[ColumnNames.MERCHANT] = ai_add_and_standardize_merchants(df, ai_config, client)
+        df = propagate_df_merchant_categories(df)
+        merchants_summary_df = get_merchants_summary_df(df)
 
-        st.session_state.is_ran_merchant = True
+        # merchants_summary_df = ai_get_merchants_categories(merchants_summary_df, ai_config, client)
+        # populate the categories in the main dataframe
+
+        st.session_state.is_ran_ai = True
         st.session_state.current_df = df
 
-    df = st.data_editor(df)
-    return df
+    else:
+        merchants_summary_df = get_merchants_summary_df(df)
+
+    message_placeholder.empty()
+
+    return df, merchants_summary_df
