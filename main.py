@@ -128,7 +128,11 @@ else:
             placeholder.empty()
             df = utils_df.concatenate_dfs(valid_dfs)
 
-if not df.empty:
+
+utils.add_categories_to_session_state(df)
+
+if not df.empty and 'categories' in st.session_state:
+    pass
     df = utils_df.add_merchants(df, ai_config, ai_client)
     # utils_df.add_categories_to_df(df, categories_dict)
     #

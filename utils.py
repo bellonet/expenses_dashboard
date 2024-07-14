@@ -7,7 +7,7 @@ from collections import OrderedDict
 import ast
 import utils_ai
 import ai_queries
-from constants import Globals
+from constants import Globals, ColumnNames
 
 
 def str_to_float(value):
@@ -76,6 +76,23 @@ def add_new_category(categories_dict, new_category):
         sorted_categories = OrderedDict(sorted(categories_dict.items()))
         return sorted_categories
     return categories_dict
+
+
+def add_categories_to_session_state(df):
+    if not df.empty and not df[ColumnNames.CATEGORY].isna().all():
+        st.session_state.categories = df[ColumnNames.CATEGORY].unique()
+    elif not df.empty and 'categories' not in st.session_state:
+        placeholder = st.empty()
+        with placeholder.container():
+            categories_temp = ''
+            categories_temp = st.text_input("Please enter your categories here, separated by a comma:",
+                                            placeholder="groceries, rent/bills, restaurants, sport...")
+
+            if categories_temp != '':
+                st.write(f"Categories: {categories_temp}")
+                if st.button("Good categories for now."):
+                    st.session_state.categories = categories_temp.split(',')
+                    placeholder.empty()
 
 
 def read_strs_to_del(json_path='json/delete_list.json'):
