@@ -1,5 +1,3 @@
-from openai import OpenAI
-import google.generativeai as genai
 import os
 
 
@@ -51,44 +49,3 @@ class Globals:
     DATE_FORMAT = '%d.%m.%Y'
     LOG_AI_PATH = os.path.join('logs', 'ai.log')
     MERCHANTS_MAX_WORDS = 7
-
-
-class OpenAIConfig:
-    MODEL = "gpt-3.5-turbo-0125"  # "gpt-4o"
-    CHUNK_SIZE = 15
-
-    @classmethod
-    def set_client(cls):
-        with open('openai_key.txt', 'r') as file:
-            openai_key = file.read().strip()
-        return OpenAI(api_key=openai_key)
-
-
-class GenAIConfig:
-    MODEL = genai.GenerativeModel("gemini-1.5-flash")
-    CHUNK_SIZE = 40
-
-    if Globals.DEBUG:
-        TEMPERATURE = 1
-    else:
-        TEMPERATURE = 0.2
-
-    GENERATION_CONFIG = genai.types.GenerationConfig(temperature=TEMPERATURE)
-
-    @classmethod
-    def set_client(cls):
-        with open('gemini_key.txt', 'r') as file:
-            genai_key = file.read().strip()
-        return genai.configure(api_key=genai_key)
-
-
-def get_ai_config(name):
-    if name == "openai":
-        return OpenAIConfig
-    elif name == "genai":
-        return GenAIConfig
-    else:
-        raise ValueError("Unsupported model name")
-
-
-AIConfig = get_ai_config("genai")

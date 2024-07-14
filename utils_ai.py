@@ -1,4 +1,5 @@
-from constants import OpenAIConfig, GenAIConfig, Globals
+from settings import OpenAIConfig, GenAIConfig
+from constants import Globals
 import re
 
 

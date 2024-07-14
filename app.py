@@ -1,47 +1,12 @@
 import streamlit as st
 import utils_html
-import logging
 import pandas as pd
 import plots
 import utils
 import utils_df
-from constants import ColumnNames, Colors, get_ai_config, Globals
+from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
-
-
-def set_logger():
-    logger = logging.getLogger()
-    if Globals.DEBUG:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    return logger
-
-
-def set_st():
-    st.set_page_config(layout="wide")
-    st.title('Expenses Analyzer')
-    st.markdown(
-        f'<h4 style="color:{Colors.PRIMARY_COLOR};">Analyze your expenses to make smarter financial decisions.</h4>',
-        unsafe_allow_html=True)
-    st.markdown(
-        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
-        , unsafe_allow_html=True)
-
-    if 'is_ran_merchant' not in st.session_state:
-        st.session_state.is_ran_merchant = False
-
-
-def set_footer():
-    footer = f"""
-    <div style="color:{Colors.SECONDARY_TEXT}; width: 100%; text-align: left; padding: 10px 0;">
-    <p>Please contact me for any bugs or feature requests: bellonet @ gmail</p>
-    <p>Another amazing tool: 
-    <a href="https://www.jonathanronen.com/time-to-retirement.html" target="_blank">Time to Retirement Calculator</a>
-    , made by my better half ❤️</p>
-    </div>
-    """
-    st.markdown(footer, unsafe_allow_html=True)
+from settings import set_logger, set_st, set_footer, get_ai_config
 
 
 def manage_sidebar_categories(categories_dict):
