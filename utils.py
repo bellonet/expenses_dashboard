@@ -1,10 +1,12 @@
 import logging
 import re
 import pandas as pd
+import numpy as np
 import streamlit as st
 import json
 from collections import OrderedDict
 import ast
+from io import StringIO
 import utils_ai
 import ai_queries
 from constants import Globals, ColumnNames
@@ -79,20 +81,21 @@ def add_new_category(categories_dict, new_category):
 
 
 def add_categories_to_session_state(df):
-    if not df.empty and not df[ColumnNames.CATEGORY].isna().all():
-        st.session_state.categories = df[ColumnNames.CATEGORY].unique()
-    elif not df.empty and 'categories' not in st.session_state:
-        placeholder = st.empty()
-        with placeholder.container():
-            categories_temp = ''
-            categories_temp = st.text_input("Please enter your categories here, separated by a comma:",
-                                            placeholder="groceries, rent/bills, restaurants, sport...")
+    if not df.empty:
+        if not df[ColumnNames.CATEGORY].eq('').all():
+            st.session_state.categories = df[ColumnNames.CATEGORY].unique()
+        elif 'categories' not in st.session_state:
+            placeholder = st.empty()
+            with placeholder.container():
+                categories_temp = ''
+                categories_temp = st.text_input("Please enter your categories here, separated by a comma:",
+                                                placeholder="groceries, rent/bills, restaurants, sport...")
 
-            if categories_temp != '':
-                st.write(f"Categories: {categories_temp}")
-                if st.button("Good categories for now."):
-                    st.session_state.categories = categories_temp.split(',')
-                    placeholder.empty()
+                if categories_temp != '':
+                    st.write(f"Categories: {categories_temp}")
+                    if st.button("Categories look good (for now)"):
+                        st.session_state.categories = categories_temp.split(',')
+                        placeholder.empty()
 
 
 def read_strs_to_del(json_path='json/delete_list.json'):
@@ -107,12 +110,13 @@ def invert_amounts(df, amount_column):
     return df
 
 
-def chunk_texts(texts_list, chunk_size):
-    chunks = [texts_list[i:i + chunk_size] for i in range(0, len(texts_list), chunk_size)]
+def get_list_chunks(full_list, chunk_size):
+    chunks = [full_list[i:i + chunk_size] for i in range(0, len(full_list), chunk_size)]
     return chunks
 
 
 def manually_match_merchants_and_chunk(merchants, chunk):
+
     matched_merchants = []
     for text in chunk:
         found = False
@@ -162,7 +166,7 @@ def ai_get_merchants_from_text(texts_list, ai_config, client):
 
     all_merchants = []
 
-    chunks = chunk_texts(texts_list, ai_config.CHUNK_SIZE)
+    chunks = get_list_chunks(texts_list, ai_config.CHUNK_SIZE)
 
     for chunk in chunks:
 
@@ -206,8 +210,9 @@ def standardize_merchant_chunk(chunk, ai_config, client):
 
 
 def ai_standardize_merchant_names(merchants, ai_config, client):
-    merchants_as_set_list = sorted(list(set(merchants)))
-    chunks = chunk_texts(merchants_as_set_list, ai_config.CHUNK_SIZE)
+    merchants_set_list = sorted(list(set(merchants)))
+    merchants_set_list = [item for item in merchants_set_list if not re.search(r'[A-Z]', item)]
+    chunks = get_list_chunks(merchants_set_list, ai_config.CHUNK_SIZE)
     standardized_merchants_dict = {}
 
     for chunk in chunks:
@@ -216,3 +221,43 @@ def ai_standardize_merchant_names(merchants, ai_config, client):
     standardized_merchants = [standardized_merchants_dict[merchant]
                               if merchant in standardized_merchants_dict else merchant for merchant in merchants]
     return standardized_merchants
+
+
+def get_df_chunks(df, chunk_size):
+    num_chunks = len(df) // chunk_size + (len(df) % chunk_size > 0)
+    print('num chunks', num_chunks)
+    print(df)
+    chunks = np.array_split(df, num_chunks)
+    return [chunk.to_csv(index=False) for chunk in chunks]
+
+
+def extract_df_from_str(response_str):
+    if 'merchant,avg_amount,num_transactions,category' in response_str:
+        start_idx = response_str.index('merchant,avg_amount,num_transactions,category')
+        csv_data = response_str[start_idx:]
+        df = pd.read_csv(StringIO(csv_data))
+        return df
+    else:
+        raise ValueError("CSV data marker not found in the response")
+
+
+def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
+
+    chunks = get_df_chunks(merchant_summary_df, ai_config.CHUNK_SIZE)
+
+    for chunk in chunks:
+        query = ai_queries.get_categories_query(chunk)
+        response_str = utils_ai.query_ai(query, ai_config, client)
+        chunk_df = extract_df_from_str(response_str)
+
+        chunk_df = chunk_df.dropna(subset=['category'])
+        if not chunk_df.empty:
+            merchant_summary_df = merchant_summary_df.merge(chunk_df[['merchant', 'category']],
+                                                            on='merchant',
+                                                            how='left',
+                                                            suffixes=('', '_updated'))
+            condition = merchant_summary_df['category_updated'].notna()
+            merchant_summary_df.loc[condition, 'category'] = merchant_summary_df.loc[condition, 'category_updated']
+            merchant_summary_df.drop(columns=['category_updated'], inplace=True)
+
+    return merchant_summary_df

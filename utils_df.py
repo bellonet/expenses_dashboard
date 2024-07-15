@@ -34,11 +34,17 @@ def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format=Globals.DATE_
     return pd.to_datetime(df[col], format=date_format, errors='coerce')
 
 
+def cols_to_str(df):
+    df[ColumnNames.CATEGORY] = df[ColumnNames.CATEGORY].fillna('').astype(str)
+    df[ColumnNames.MERCHANT] = df[ColumnNames.MERCHANT].fillna('').astype(str)
+    return df
+
 def format_df(df):
     df.reset_index(drop=True, inplace=True)
     df = df[df[ColumnNames.AMOUNT].notna()]
     df = col_str_to_float(df)
     df = col_str_to_date(df)
+    df = cols_to_str(df)
     return df
 
 
@@ -107,11 +113,13 @@ def manual_rename_columns(df, idx):
 
 
 def ai_rename_columns(df, ai_config, client):
-    column_names = df.columns
-    query = ai_queries.get_column_names_query(column_names)
-    column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
-    column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
-    df = df.rename(columns=column_names_dict)
+    if 'ai_rename_columns' not in st.session_state:
+        column_names = df.columns
+        query = ai_queries.get_column_names_query(column_names)
+        column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
+        column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
+        df = df.rename(columns=column_names_dict)
+        st.session_state.ai_rename_columns = True
     return df
 
 
@@ -259,14 +267,21 @@ def get_df_mask(df, column_name):
 
 
 def ai_add_and_standardize_merchants(df, ai_config, client):
+    first_mask = None
     for i in range(4):
         mask = get_df_mask(df, ColumnNames.MERCHANT)
+        if i == 0:
+            first_mask = mask
         texts_list = df.loc[mask, ColumnNames.TEXT].tolist()
         if texts_list:
             df.loc[mask, ColumnNames.MERCHANT] = utils.ai_get_merchants_from_text(texts_list, ai_config, client)
 
+    if first_mask is not None:
+        masked_merchants = df.loc[first_mask, ColumnNames.MERCHANT].tolist()
+        standardized_merchants = utils.standardize_merchant_names(masked_merchants)
+        df.loc[first_mask, ColumnNames.MERCHANT] = standardized_merchants
+
     merchants = df[ColumnNames.MERCHANT].tolist()
-    merchants = utils.standardize_merchant_names(merchants)
     merchants = utils.ai_standardize_merchant_names(merchants, ai_config, client)
 
     return merchants
@@ -293,19 +308,42 @@ def propagate_df_merchant_categories(df):
     return df
 
 
+def populate_categories(df, merchants_summary_df):
+    df = df.merge(merchants_summary_df[['merchant', 'category']], on='merchant', how='left', suffixes=('', '_updated'))
+    mask = get_df_mask(df, ColumnNames.CATEGORY)
+    if df['category'].dtype != df['category_updated'].dtype:
+        df['category_updated'] = df['category_updated'].astype(df['category'].dtype)
+    df.loc[mask, 'category'] = df.loc[mask, 'category_updated']
+    df.drop(columns=['category_updated'], inplace=True)
+    return df
+
+
+def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
+    mask = get_df_mask(merchant_summary_df, 'category')
+    masked_merchant_summary_df = merchant_summary_df[mask]
+    if not mask.empty:
+        merchant_summary_df.loc[mask, 'category'] = utils.ai_get_merchants_categories(masked_merchant_summary_df,
+                                                                                      ai_config,
+                                                                                      client)
+    return merchant_summary_df
+
+
 def add_merchants_and_categories(df, ai_config, client):
     message_placeholder = st.empty()
-    message_placeholder.info((f"Processing merchant names from transaction texts. This may take a couple of minutes.. "
+    message_placeholder.info((f"Processing merchant names from transaction texts and sorting to categories. " 
+                              f"This may take a couple of minutes.. "
                               f"It's good time to make a coffee or go to the pull-up bar."))
     logging.info("Starting ai merchant extraction process.")
 
     if not st.session_state.is_ran_ai:
         df[ColumnNames.MERCHANT] = ai_add_and_standardize_merchants(df, ai_config, client)
         df = propagate_df_merchant_categories(df)
+        df.to_csv('temp_df_with_categories_prop.csv', index=False)
         merchants_summary_df = get_merchants_summary_df(df)
+        merchants_summary_df.to_csv('temp_merchant_summary.csv', index=False)
 
-        # merchants_summary_df = ai_get_merchants_categories(merchants_summary_df, ai_config, client)
-        # populate the categories in the main dataframe
+        merchants_summary_df = ai_get_merchants_categories(merchants_summary_df, ai_config, client)
+        df = populate_categories(df, merchants_summary_df)
 
         st.session_state.is_ran_ai = True
         st.session_state.current_df = df

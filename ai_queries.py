@@ -1,3 +1,6 @@
+import streamlit as st
+
+
 def get_column_names_query(names):
     query = (f'For the following column names, output only the one (not a list) best column names that correspond to '
              f'"amount", "date" and "text" in a form of a dictionary. \n\n{"\n".join(names)}')
@@ -19,8 +22,15 @@ def get_merchants_query(chunk):
     return query
 
 
-def get_standardize_merchants_query(merchants_set):
+def get_standardize_merchants_query(chunk):
     query = (f'for the following list, correct the merchant name to be the actual short business name. '
-             f"Don't relay on common keywords, but on the actual business name (e.g. find restaurant name)." 
-             f"form your answer as a dictionary (no explanation or comments): \n\n{"\n".join(merchants_set)}")
+             f"Don't relay on common keywords, but on the actual business name (e.g. find restaurant name). " 
+             f"form your answer as a dictionary (no explanation or comments): \n\n{"\n".join(chunk)}")
+    return query
+
+
+def get_categories_query(chunk):
+    query = (f'possible expenses categories: {",".join(st.session_state.categories)} .\n'
+             f'add the missing categories to table based on merchant, and average amount spend/gained. ' 
+             f'If you are not 90% sure,leave empty. Answer only with the table. no explanation: \n\n{chunk}')
     return query

@@ -48,20 +48,19 @@ else:
             placeholder.empty()
             df = utils_df.concatenate_dfs(valid_dfs)
 
-
 utils.add_categories_to_session_state(df)
-
+#
 if not df.empty and 'categories' in st.session_state:
-    df = utils_df.add_merchants_and_categories(df, ai_config, ai_client)
+    df, merchants_summary_df = utils_df.add_merchants_and_categories(df, ai_config, ai_client)
 
     df = st.data_editor(df)
-
-    #         date_filtered_df = utils_df.apply_date_filter(df)
-    #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
-    #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
-    #         df = utils_df.delete_rows(df, to_del_substr_l)
-    #
-    # if not df.empty:
-    #     display_data(df)
-    #
-    set_footer()
+#
+#     #         date_filtered_df = utils_df.apply_date_filter(df)
+#     #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
+#     #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
+#     #         df = utils_df.delete_rows(df, to_del_substr_l)
+#     #
+#     # if not df.empty:
+#     #     display_data(df)
+#     #
+#     set_footer()
