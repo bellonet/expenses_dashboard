@@ -25,6 +25,8 @@ This project is licensed under the MIT License.
 
 ## To Do
 - Add rows to categories functionality.
+- Add checks that api responses match table size (and maybe loop).
+- Test if works - Avoid long api call of standardize merchant name if merchant name is not new.
 - Improve user messages/instructions/workflow.
 - Create functionality of category edits - add and delete.
 - Save categories json function?
