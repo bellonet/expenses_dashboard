@@ -1,0 +1,6 @@
+date,text,amount,merchant,category
+2023-07-16,Purchase,150.50,Starbucks,Coffee
+2023-07-17,Refund,-75.25,Amazon,Electronics
+2023-07-18,Purchase,200.00,Walmart,Groceries
+2023-07-19,Payment,180.75,Shell,Fuel
+2023-07-20,Purchase,-150.00,Netflix,Entertainment
