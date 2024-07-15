@@ -1,4 +1,5 @@
 import logging
+import os
 import streamlit as st
 from constants import Globals, Colors
 from openai import OpenAI
@@ -9,6 +10,8 @@ def set_logger():
     logger = logging.getLogger()
     if Globals.DEBUG:
         logger.setLevel(logging.DEBUG)
+        watchdog_logger = logging.getLogger('watchdog.observers')
+        watchdog_logger.setLevel(logging.WARNING)
     else:
         logger.setLevel(logging.INFO)
     return logger
@@ -25,8 +28,9 @@ def set_st():
         st.session_state.is_ran_ai = False
 
     st.markdown(
-        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">'
-        , unsafe_allow_html=True)
+        f'<link rel="stylesheet" '
+        f'href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">',
+        unsafe_allow_html=True)
 
 
 def set_footer():
@@ -47,7 +51,7 @@ class OpenAIConfig:
 
     @classmethod
     def set_client(cls):
-        with open('openai_key.txt', 'r') as file:
+        with open(os.path.join('api_keys', 'openai_key.txt'), 'r') as file:
             openai_key = file.read().strip()
         return OpenAI(api_key=openai_key)
 
@@ -65,7 +69,7 @@ class GenAIConfig:
 
     @classmethod
     def set_client(cls):
-        with open('gemini_key.txt', 'r') as file:
+        with open(os.path.join('api_keys', 'gemini_key.txt'), 'r') as file:
             genai_key = file.read().strip()
         return genai.configure(api_key=genai_key)
 
