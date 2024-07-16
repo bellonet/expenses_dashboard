@@ -2,8 +2,9 @@ import streamlit as st
 
 
 def get_column_names_query(names):
-    query = (f'For the following column names, output only the one (not a list) best column names that correspond to '
-             f'"amount", "date" and "text" in a form of a dictionary. \n\n{"\n".join(names)}')
+    query = (f"For the following column names, output a dictionary with the keys 'amount', 'date', and 'text'. "
+             f"The values should be the closest matching column name, even if the key is the same as a column name. "
+             f'Output only dictionary. \n\n{"\n".join(names)}')
     return query
 
 

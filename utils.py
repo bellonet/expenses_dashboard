@@ -45,6 +45,8 @@ def is_valid_date(date_str):
 
 def is_valid_float(float_str):
     try:
+        if isinstance(float_str, float):
+            return True
         # Check for German format (e.g., -1.000,23 or 1.000,23)
         if re.match(r'^-?\d{1,3}(?:\.\d{3})*,\d{2}$', float_str):
             return True
@@ -145,7 +147,8 @@ def get_merchant_chunk(chunk, ai_config, client):
     merchants_str = utils_ai.query_ai(query, ai_config, client)
     merchants = merchants_str.strip().splitlines()
 
-    merchants = [re.sub(r'^[\d.-]*\s*|\*+$', '', merchant) for merchant in merchants]
+    # merchants = [re.sub(r'^[\d.-]*\s*|\*+$', '', merchant) for merchant in merchants]
+    merchants = [re.sub(r'^\d+\.\s*|\*+', '', merchant) for merchant in merchants]
     merchants = delete_merchants_from_chunk(merchants)
 
     if len(merchants) != len(chunk):
@@ -225,8 +228,6 @@ def ai_standardize_merchant_names(merchants, ai_config, client):
 
 def get_df_chunks(df, chunk_size):
     num_chunks = len(df) // chunk_size + (len(df) % chunk_size > 0)
-    print('num chunks', num_chunks)
-    print(df)
     chunks = np.array_split(df, num_chunks)
     return [chunk.to_csv(index=False) for chunk in chunks]
 

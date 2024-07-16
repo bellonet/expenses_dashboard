@@ -39,6 +39,7 @@ def cols_to_str(df):
     df[ColumnNames.MERCHANT] = df[ColumnNames.MERCHANT].fillna('').astype(str)
     return df
 
+
 def format_df(df):
     df.reset_index(drop=True, inplace=True)
     df = df[df[ColumnNames.AMOUNT].notna()]
@@ -113,13 +114,13 @@ def manual_rename_columns(df, idx):
 
 
 def ai_rename_columns(df, ai_config, client):
-    if 'ai_rename_columns' not in st.session_state:
-        column_names = df.columns
-        query = ai_queries.get_column_names_query(column_names)
-        column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
-        column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
-        df = df.rename(columns=column_names_dict)
-        st.session_state.ai_rename_columns = True
+
+    column_names = df.columns
+    query = ai_queries.get_column_names_query(column_names)
+    column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
+    column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
+    df = df.rename(columns=column_names_dict)
+
     return df
 
 
@@ -131,9 +132,17 @@ def add_missing_columns(df, new_columns):
 
 
 def rename_columns(df, ai_config, client, i):
-    df = ai_rename_columns(df, ai_config, client)
+    state_str = f'df{i}_columns'
+    is_ran_ai_str = f'is_ran_ai_df{i}_column_names'
+    if state_str not in st.session_state and is_ran_ai_str not in st.session_state:
+        st.session_state[is_ran_ai_str] = True
+        if not all(col in df.columns for col in ColumnNames.initial_columns_as_list()):
+            df = ai_rename_columns(df, ai_config, client)
     df = add_missing_columns(df, ColumnNames.additional_columns_as_list())
-    if not all(col in df.columns for col in ColumnNames.initial_columns_as_list()):
+
+    if all(c in df.columns for c in ColumnNames.initial_columns_as_list()):
+        st.session_state[state_str] = df.columns
+    else:
         manual_rename_columns(df, i)
     return df
 
@@ -215,7 +224,8 @@ def upload_csvs_to_dfs():
             st.rerun()
 
     else:
-        st.write(f"Uploaded files: {' '.join(st.session_state.uploaded_files)}")
+        file_list = '<br>'.join(st.session_state.uploaded_files)
+        st.write(f"Uploaded files:<br>{file_list}", unsafe_allow_html=True)
 
         if st.button("Start Over"):
             set_upload_csv_state()

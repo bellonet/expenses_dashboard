@@ -24,7 +24,9 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
+- Fix missing dates in some date formats.
 - Add rows to categories functionality.
+- If user doesn't provide enough categories - make sure llm doesn't invent new ones.
 - Add checks that api responses match table size (and maybe loop).
 - Test if works - Avoid long api call of standardize merchant name if merchant name is not new.
 - Improve user messages/instructions/workflow.
