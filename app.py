@@ -31,9 +31,6 @@ logger = set_logger()
 ai_config = get_ai_config("genai")
 ai_client = ai_config.set_client()
 
-categories_dict = utils.read_categories()
-to_del_substr_l = utils.read_strs_to_del()
-
 set_st()
 if 'current_df' in st.session_state:
     df = st.session_state.current_df
