@@ -335,7 +335,7 @@ def add_merchants_and_categories(df, ai_config, client):
                               f"It's good time to make a coffee or go to the pull-up bar."))
     logging.info("Starting ai merchant extraction process.")
 
-    if not st.session_state.is_ran_ai:
+    if 'is_ran_ai' not in st.session_state:
         df[ColumnNames.MERCHANT] = ai_add_and_standardize_merchants(df, ai_config, client)
         df = propagate_df_merchant_categories(df)
         df.to_csv('temp_df_with_categories_prop.csv', index=False)

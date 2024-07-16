@@ -24,9 +24,6 @@ def set_st():
         f'<h4 style="color:{Colors.PRIMARY_COLOR};">Analyze your expenses to make smarter financial decisions.</h4>',
         unsafe_allow_html=True)
 
-    if 'is_ran_ai' not in st.session_state:
-        st.session_state.is_ran_ai = False
-
     st.markdown(
         f'<link rel="stylesheet" '
         f'href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">',
