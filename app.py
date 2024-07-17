@@ -3,6 +3,7 @@ import pandas as pd
 import plots
 import utils
 import preprocess_df
+from preprocess_merchants_categories import add_merchants_and_categories
 import utils_df
 from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
@@ -50,7 +51,7 @@ else:
 utils.add_categories_to_session_state(df)
 #
 if not df.empty and 'categories' in st.session_state:
-    df, merchants_summary_df = utils_df.add_merchants_and_categories(df, ai_config, ai_client)
+    df, merchants_summary_df = add_merchants_and_categories(df, ai_config, ai_client)
 
     df = st.data_editor(df)
 #

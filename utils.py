@@ -1,4 +1,3 @@
-import logging
 import re
 import pandas as pd
 import numpy as np
@@ -121,70 +120,6 @@ def get_list_chunks(full_list, chunk_size):
     return chunks
 
 
-def manually_match_merchants_and_chunk(merchants, chunk):
-
-    matched_merchants = []
-    for text in chunk:
-        found = False
-        for merchant in merchants:
-            if merchant in text:
-                matched_merchants.append(merchant)
-                found = True
-                break
-        if not found:
-            matched_merchants.append('')
-
-    return matched_merchants
-
-
-def log_mismatch_to_txt(chunk, merchants):
-    with open(Globals.LOG_AI_PATH, 'a') as f:
-        f.write('Chunk:\n')
-        f.write('\n'.join(chunk))
-        f.write('\n\nMerchants:\n')
-        f.write('\n'.join(merchants))
-        f.write('\n\n')
-
-
-def get_merchant_chunk(chunk, ai_config, client):
-    query = ai_queries.get_merchants_query(chunk)
-    merchants_str = utils_ai.query_ai(query, ai_config, client)
-    merchants = merchants_str.strip().splitlines()
-
-    # merchants = [re.sub(r'^[\d.-]*\s*|\*+$', '', merchant) for merchant in merchants]
-    merchants = [re.sub(r'^\d+\.\s*|\*+', '', merchant) for merchant in merchants]
-    merchants = delete_merchants_from_chunk(merchants)
-
-    if len(merchants) != len(chunk):
-        logging.warning(f"Merchant-Chunk length mismatch: {len(merchants)} vs {len(chunk)} - some empty.")
-        merchants = manually_match_merchants_and_chunk(merchants, chunk)
-        log_mismatch_to_txt(chunk, merchants)
-
-    return merchants
-
-
-def delete_merchants_from_chunk(merchants):
-    merchants = [item for item in merchants if len(item.split()) < Globals.MERCHANTS_MAX_WORDS]
-    merchants = [item for item in merchants if item != '']
-    return merchants
-
-
-def ai_get_merchants_from_text(texts_list, ai_config, client):
-
-    all_merchants = []
-
-    chunks = get_list_chunks(texts_list, ai_config.CHUNK_SIZE)
-
-    for chunk in chunks:
-
-        merchants = get_merchant_chunk(chunk, ai_config, client)
-        all_merchants.extend(merchants)
-
-    logging.info("ai merchant extraction completed.")
-
-    return all_merchants
-
-
 def get_dict_from_string(string, flip=False):
     start = string.find('{')
     end = string.find('}') + 1
@@ -195,39 +130,6 @@ def get_dict_from_string(string, flip=False):
     if flip:
         d = {value: key for key, value in d.items()}
     return d
-
-
-def standardize_merchant_names(merchants):
-    merchants = [merchant.lower().strip().replace(',', '').replace("'", '') for merchant in merchants]
-    merchants = [merchant.split(' gmbh')[0] for merchant in merchants]
-    for n in range(1, 5):
-        n_worded_strs = {merchant.lower() for merchant in merchants if len(merchant.split()) == n}
-        for s in n_worded_strs:
-            for i, merchant in enumerate(merchants):
-                if merchant.lower().startswith(s):
-                    merchants[i] = s
-    return merchants
-
-
-def standardize_merchant_chunk(chunk, ai_config, client):
-    query = ai_queries.get_standardize_merchants_query(chunk)
-    standardized_merchants_str = utils_ai.query_ai(query, ai_config, client)
-    standardized_merchants_dict = get_dict_from_string(standardized_merchants_str)
-    return standardized_merchants_dict
-
-
-def ai_standardize_merchant_names(merchants, ai_config, client):
-    merchants_set_list = sorted(list(set(merchants)))
-    merchants_set_list = [item for item in merchants_set_list if not re.search(r'[A-Z]', item)]
-    chunks = get_list_chunks(merchants_set_list, ai_config.CHUNK_SIZE)
-    standardized_merchants_dict = {}
-
-    for chunk in chunks:
-        standardized_merchants_dict.update(standardize_merchant_chunk(chunk, ai_config, client))
-
-    standardized_merchants = [standardized_merchants_dict[merchant]
-                              if merchant in standardized_merchants_dict else merchant for merchant in merchants]
-    return standardized_merchants
 
 
 def get_df_chunks(df, chunk_size):
@@ -266,3 +168,10 @@ def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
             merchant_summary_df.drop(columns=['category_updated'], inplace=True)
 
     return merchant_summary_df
+
+
+def get_df_mask(df, column_name):
+    mask = (df[column_name].isna() |
+            (df[column_name] == '') |
+            (df[column_name] == ','))
+    return mask
