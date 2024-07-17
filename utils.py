@@ -30,6 +30,10 @@ def str_to_float(value):
     return float(value)
 
 
+def get_date_col_as_datetime(df, col=ColumnNames.DATE, date_format=Globals.DATE_FORMAT):
+    return pd.to_datetime(df[col], format=date_format, errors='coerce')
+
+
 def display_message(color, message):
     st.markdown(f"<span style='color: {color};'>{message}</span>", unsafe_allow_html=True)
 

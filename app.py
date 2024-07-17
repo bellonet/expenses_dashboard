@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plots
 import utils
+import df_preprocess
 import utils_df
 from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
@@ -40,10 +41,10 @@ else:
 
     if all_dfs:
         placeholder = st.empty()
-        valid_dfs = utils_df.format_columns_all_dfs(all_dfs, placeholder.container, ai_config, ai_client)
+        valid_dfs = df_preprocess.format_columns_all_dfs(all_dfs, placeholder.container, ai_config, ai_client)
         if len(valid_dfs) == len(all_dfs):
             placeholder.empty()
-            df = utils_df.concatenate_dfs(valid_dfs)
+            df = df_preprocess.concatenate_dfs(valid_dfs)
             st.session_state.current_df = df
 
 utils.add_categories_to_session_state(df)
