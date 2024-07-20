@@ -148,28 +148,6 @@ def extract_df_from_str(response_str):
         raise ValueError("CSV data marker not found in the response")
 
 
-def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
-
-    chunks = get_df_chunks(merchant_summary_df, ai_config.CHUNK_SIZE)
-
-    for chunk in chunks:
-        query = ai_queries.get_categories_query(chunk)
-        response_str = utils_ai.query_ai(query, ai_config, client)
-        chunk_df = extract_df_from_str(response_str)
-
-        chunk_df = chunk_df.dropna(subset=['category'])
-        if not chunk_df.empty:
-            merchant_summary_df = merchant_summary_df.merge(chunk_df[['merchant', 'category']],
-                                                            on='merchant',
-                                                            how='left',
-                                                            suffixes=('', '_updated'))
-            condition = merchant_summary_df['category_updated'].notna()
-            merchant_summary_df.loc[condition, 'category'] = merchant_summary_df.loc[condition, 'category_updated']
-            merchant_summary_df.drop(columns=['category_updated'], inplace=True)
-
-    return merchant_summary_df
-
-
 def get_df_mask(df, column_name):
     mask = (df[column_name].isna() |
             (df[column_name] == '') |

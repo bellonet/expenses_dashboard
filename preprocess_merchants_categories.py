@@ -22,7 +22,7 @@ def add_merchants_and_categories(df, ai_config, client):
         merchants_summary_df = get_merchants_summary_df(df)
         merchants_summary_df.to_csv('temp_merchant_summary.csv', index=False)
 
-        merchants_summary_df = ai_get_merchants_categories(merchants_summary_df, ai_config, client)
+        merchants_summary_df = get_merchants_categories(merchants_summary_df, ai_config, client)
         df = populate_categories(df, merchants_summary_df)
 
         st.session_state.is_ran_ai = True
@@ -78,13 +78,35 @@ def get_merchants_summary_df(df):
     return merchants_summary_df
 
 
-def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
+def get_merchants_categories(merchant_summary_df, ai_config, client):
     mask = utils.get_df_mask(merchant_summary_df, 'category')
     masked_merchant_summary_df = merchant_summary_df[mask]
     if not mask.empty:
         merchant_summary_df.loc[mask, 'category'] = ai_get_merchants_categories(masked_merchant_summary_df,
                                                                                 ai_config,
                                                                                 client)
+    return merchant_summary_df
+
+
+def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
+
+    chunks = utils.get_df_chunks(merchant_summary_df, ai_config.CHUNK_SIZE)
+
+    for chunk in chunks:
+        query = ai_queries.get_categories_query(chunk)
+        response_str = utils_ai.query_ai(query, ai_config, client)
+        chunk_df = utils.extract_df_from_str(response_str)
+
+        chunk_df = chunk_df.dropna(subset=['category'])
+        if not chunk_df.empty:
+            merchant_summary_df = merchant_summary_df.merge(chunk_df[['merchant', 'category']],
+                                                            on='merchant',
+                                                            how='left',
+                                                            suffixes=('', '_updated'))
+            condition = merchant_summary_df['category_updated'].notna()
+            merchant_summary_df.loc[condition, 'category'] = merchant_summary_df.loc[condition, 'category_updated']
+            merchant_summary_df.drop(columns=['category_updated'], inplace=True)
+
     return merchant_summary_df
 
 
