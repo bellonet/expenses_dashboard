@@ -24,7 +24,8 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-- Fix missing dates in some date formats.
+- Add checks that dataframe column in correct format.
+- Fix bug that happens when user "starts over" and uploads new files.
 - Add rows to categories functionality.
 - If user doesn't provide enough categories - make sure llm doesn't invent new ones.
 - Add checks that api responses match table size (and maybe loop).

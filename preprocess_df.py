@@ -76,6 +76,7 @@ def manual_rename_columns(df, idx):
     elif all(name in new_columns for name in ColumnNames.as_list()):
 
         date_valid = check_column_format(df, utils.is_valid_date, new_columns.index(ColumnNames.DATE))
+        print("Date valid:", date_valid)
         amount_valid = check_column_format(df, utils.is_valid_float, new_columns.index(ColumnNames.AMOUNT))
 
         if date_valid and amount_valid:
@@ -117,19 +118,33 @@ def col_str_to_float(df, col=ColumnNames.AMOUNT):
 
 
 def col_str_to_date(df, col=ColumnNames.DATE):
-    df[col] = pd.to_datetime(df[col], format=Globals.DATE_FORMAT, errors='coerce')
+    df[col] = df[col].apply(try_parsing_date)
     df[col] = df.apply(lambda row: find_alternative_date(row, df) if pd.isna(row[col]) else row[col], axis=1)
     df[col] = df[col].apply(lambda x: x.strftime(Globals.DATE_FORMAT) if not pd.isna(x) else x)
     df[col] = df[col].ffill()
     return df
 
 
+def try_parsing_date(text):
+    for fmt in Globals.INPUT_DATE_FORMATS:
+        try:
+            return pd.to_datetime(text, format=fmt, errors='coerce')
+        except (ValueError, TypeError):
+            continue
+    return pd.NaT
+
+
 def find_alternative_date(row, df):
     for column in df.columns:
-        temp_date = pd.to_datetime(row[column], format=Globals.DATE_FORMAT, errors='coerce')
-        if pd.notna(temp_date):
-            return temp_date
-    return None
+        if column != ColumnNames.DATE:
+            for fmt in Globals.INPUT_DATE_FORMATS:
+                try:
+                    temp_date = pd.to_datetime(row[column], format=fmt, errors='coerce')
+                    if pd.notna(temp_date):
+                        return temp_date
+                except (ValueError, TypeError):
+                    continue
+    return pd.NaT
 
 
 def check_column_format(df, is_valid_func, col_idx):
