@@ -117,6 +117,7 @@ def col_str_to_float(df, col=ColumnNames.AMOUNT):
 
 
 def col_str_to_date(df, col=ColumnNames.DATE):
+    df[col] = df[col].str.strip()
     df[col] = df[col].apply(try_parsing_date)
     df[col] = df.apply(lambda row: find_alternative_date(row, df) if pd.isna(row[col]) else row[col], axis=1)
     df[col] = df[col].apply(lambda x: x.strftime(Globals.DATE_FORMAT) if not pd.isna(x) else x)
@@ -126,10 +127,9 @@ def col_str_to_date(df, col=ColumnNames.DATE):
 
 def try_parsing_date(text):
     for fmt in Globals.INPUT_DATE_FORMATS:
-        try:
-            return pd.to_datetime(text, format=fmt, errors='coerce')
-        except (ValueError, TypeError):
-            continue
+        result = pd.to_datetime(text, format=fmt, errors='coerce')
+        if not pd.isna(result):
+            return result
     return pd.NaT
 
 

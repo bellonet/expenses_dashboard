@@ -47,6 +47,7 @@ class Colors:
 class Globals:
     DEBUG = True
     DATE_FORMAT = '%d-%m-%Y'
-    INPUT_DATE_FORMATS = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d.%m.%Y', '%Y.%m.%d', '%d %b %Y', '%d %B %Y']
+    INPUT_DATE_FORMATS = ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y',
+                          '%d.%m.%Y', '%Y.%m.%d', '%d %b %Y', '%d %B %Y']
     LOG_AI_PATH = os.path.join('logs', 'ai.log')
     MERCHANTS_MAX_WORDS = 7
