@@ -76,7 +76,6 @@ def manual_rename_columns(df, idx):
     elif all(name in new_columns for name in ColumnNames.as_list()):
 
         date_valid = check_column_format(df, utils.is_valid_date, new_columns.index(ColumnNames.DATE))
-        print("Date valid:", date_valid)
         amount_valid = check_column_format(df, utils.is_valid_float, new_columns.index(ColumnNames.AMOUNT))
 
         if date_valid and amount_valid:

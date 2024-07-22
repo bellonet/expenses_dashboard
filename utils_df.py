@@ -73,9 +73,8 @@ def upload_csvs_to_dfs():
         file_list = '<br>'.join(st.session_state.uploaded_files)
         st.write(f"Uploaded files:<br>{file_list}", unsafe_allow_html=True)
 
-        if st.button("Start Over"):
-            set_upload_csv_state()
-            st.experimental_rerun()
+        st.write(f"Please note: if you close or refresh this page, all unsaved changes will be lost.",
+                 unsafe_allow_html=True)
 
     return st.session_state.all_dfs
 
