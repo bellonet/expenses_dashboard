@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-from constants import ColumnNames
-import utils
 
 
 def upload_csvs_to_dfs():
@@ -48,13 +46,3 @@ def save_df_to_csv(df):
                        mime='text/csv')
     st.warning('''Save your work by downloading the CSV  
                 Make sure you don't select unwanted filters!''')
-
-
-def get_monthly_expense_df(df, df_grouped):
-    df['month'] = utils.get_date_col_as_datetime(df).dt.to_period('M').astype(str)
-    monthly_expenses = df.groupby(['month', ColumnNames.CATEGORY])[ColumnNames.AMOUNT].sum().reset_index()
-    category_order = df_grouped.sort_values(by=ColumnNames.AMOUNT, ascending=False)[ColumnNames.CATEGORY].tolist()
-    monthly_expenses[ColumnNames.CATEGORY] = pd.Categorical(monthly_expenses[ColumnNames.CATEGORY],
-                                                            categories=category_order,
-                                                            ordered=True)
-    return monthly_expenses

@@ -5,6 +5,7 @@ import utils
 import preprocess_df
 from preprocess_merchants_categories import add_merchants_and_categories
 import utils_df
+import utils_io
 from constants import ColumnNames
 from plots import plot_pie_chart, plot_bar_chart
 from settings import set_logger, set_st, set_footer, get_ai_config
@@ -12,7 +13,7 @@ from settings import set_logger, set_st, set_footer, get_ai_config
 
 def display_data(df):
     st.dataframe(df)
-    utils_df.save_df_to_csv(df)
+    utils_io.save_df_to_csv(df)
     df = utils.invert_amounts(df, ColumnNames.AMOUNT)
     plots.display_summary_metrics(df)
 
@@ -38,7 +39,7 @@ if 'current_df' in st.session_state:
     df = st.session_state.current_df
 else:
     df = pd.DataFrame()
-    all_dfs = utils_df.upload_csvs_to_dfs()
+    all_dfs = utils_io.upload_csvs_to_dfs()
 
     if all_dfs:
         placeholder = st.empty()
