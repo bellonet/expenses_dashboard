@@ -6,8 +6,6 @@ import json
 from collections import OrderedDict
 import ast
 from io import StringIO
-import utils_ai
-import ai_queries
 from constants import Globals, ColumnNames
 
 
