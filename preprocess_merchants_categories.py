@@ -81,10 +81,11 @@ def get_merchants_summary_df(df):
 def get_merchants_categories(merchant_summary_df, ai_config, client):
     mask = utils.get_df_mask(merchant_summary_df, 'category')
     masked_merchant_summary_df = merchant_summary_df[mask]
-    if not mask.empty:
+    if not masked_merchant_summary_df.empty:
         merchant_summary_df.loc[mask, 'category'] = ai_get_merchants_categories(masked_merchant_summary_df,
                                                                                 ai_config,
                                                                                 client)
+
     return merchant_summary_df
 
 
@@ -93,10 +94,10 @@ def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
     chunks = utils.get_df_chunks(merchant_summary_df, ai_config.CHUNK_SIZE)
 
     for chunk in chunks:
+        max_tokens = len(chunk) * 10
         query = ai_queries.get_categories_query(chunk)
-        response_str = utils_ai.query_ai(query, ai_config, client)
+        response_str = utils_ai.query_ai(query, ai_config, client, max_tokens=max_tokens)
         chunk_df = utils.extract_df_from_str(response_str)
-
         chunk_df = chunk_df.dropna(subset=['category'])
         if not chunk_df.empty:
             merchant_summary_df = merchant_summary_df.merge(chunk_df[['merchant', 'category']],
@@ -107,7 +108,7 @@ def ai_get_merchants_categories(merchant_summary_df, ai_config, client):
             merchant_summary_df.loc[condition, 'category'] = merchant_summary_df.loc[condition, 'category_updated']
             merchant_summary_df.drop(columns=['category_updated'], inplace=True)
 
-    return merchant_summary_df
+    return merchant_summary_df['category'].tolist()
 
 
 def populate_categories(df, merchants_summary_df):
@@ -149,15 +150,17 @@ def standardize_merchant_names(merchants):
 
 
 def standardize_merchant_chunk(chunk, ai_config, client):
+    max_tokens = len(chunk) * 15
     query = ai_queries.get_standardize_merchants_query(chunk)
-    standardized_merchants_str = utils_ai.query_ai(query, ai_config, client)
+    standardized_merchants_str = utils_ai.query_ai(query, ai_config, client, max_tokens)
     standardized_merchants_dict = utils.get_dict_from_string(standardized_merchants_str)
     return standardized_merchants_dict
 
 
 def ai_standardize_merchant_names(merchants, ai_config, client):
     merchants_set_list = sorted(list(set(merchants)))
-    merchants_set_list = [item for item in merchants_set_list if not re.search(r'[A-Z]', item)]
+    merchants_set_list = [item for item in merchants_set_list if not re.search(r'[A-Z]', item) and item]
+
     chunks = utils.get_list_chunks(merchants_set_list, ai_config.CHUNK_SIZE)
     standardized_merchants_dict = {}
 
@@ -170,8 +173,9 @@ def ai_standardize_merchant_names(merchants, ai_config, client):
 
 
 def get_merchant_chunk(chunk, ai_config, client):
+    max_tokens = len(chunk) * 15
     query = ai_queries.get_merchants_query(chunk)
-    merchants_str = utils_ai.query_ai(query, ai_config, client)
+    merchants_str = utils_ai.query_ai(query, ai_config, client, max_tokens)
     merchants = merchants_str.strip().splitlines()
 
     # merchants = [re.sub(r'^[\d.-]*\s*|\*+$', '', merchant) for merchant in merchants]

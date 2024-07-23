@@ -37,9 +37,10 @@ def rename_columns(df, ai_config, client, i):
 
 def ai_rename_columns(df, ai_config, client):
 
+    max_tokens = 40
     column_names = df.columns
     query = ai_queries.get_column_names_query(column_names)
-    column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client)
+    column_name_dict_as_str = utils_ai.query_ai(query, ai_config, client, max_tokens)
     column_names_dict = utils.get_dict_from_string(column_name_dict_as_str, flip=True)
     df = df.rename(columns=column_names_dict)
 
@@ -106,6 +107,7 @@ def get_allowed_columns(col, allowed_cols):
 
 
 def cols_to_str(df):
+    df[ColumnNames.TEXT] = df[ColumnNames.TEXT].fillna('').astype(str)
     df[ColumnNames.CATEGORY] = df[ColumnNames.CATEGORY].fillna('').astype(str)
     df[ColumnNames.MERCHANT] = df[ColumnNames.MERCHANT].fillna('').astype(str)
     return df
@@ -171,6 +173,10 @@ def concatenate_dfs(dfs):
     if len(dfs) > 0:
         df = pd.concat(dfs, ignore_index=True)
         st.write("Created a merged and formatted table.")
+        if df.empty:
+            st.error('No valid rows in csv files. Please refresh and start again')
+        if (df[ColumnNames.TEXT] == '').any():
+            st.warning("Some text columns have missing values and won't be processed. Please check column names.")
         return df
     else:
         st.error('No valid DataFrames to concatenate.')

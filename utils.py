@@ -86,7 +86,7 @@ def add_new_category(categories_dict, new_category):
 def add_categories_to_session_state(df):
     if not df.empty:
         if not df[ColumnNames.CATEGORY].eq('').all():
-            st.session_state.categories = df[ColumnNames.CATEGORY].unique()
+            st.session_state.categories = df[df['category'].notna() & (df['category'] != '')]['category'].unique()
         elif 'categories' not in st.session_state:
             placeholder = st.empty()
             with placeholder.container():
@@ -140,10 +140,19 @@ def extract_df_from_str(response_str):
     if 'merchant,avg_amount,num_transactions,category' in response_str:
         start_idx = response_str.index('merchant,avg_amount,num_transactions,category')
         csv_data = response_str[start_idx:]
+        csv_data = str_filter_lines_with_x_commas(csv_data, 3)
         df = pd.read_csv(StringIO(csv_data))
+        df = df[df['merchant'].notna() & (df['merchant'] != '')]
         return df
     else:
         raise ValueError("CSV data marker not found in the response")
+
+
+def str_filter_lines_with_x_commas(input_string, x):
+    lines = input_string.split('\n')
+    filtered_lines = [line for line in lines if line.count(',') == x]
+    output_string = '\n'.join(filtered_lines)
+    return output_string
 
 
 def get_df_mask(df, column_name):

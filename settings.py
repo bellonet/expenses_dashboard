@@ -58,11 +58,9 @@ class GenAIConfig:
     CHUNK_SIZE = 40
 
     if Globals.DEBUG:
-        TEMPERATURE = 1
+        TEMPERATURE = 0.5
     else:
         TEMPERATURE = 0.2
-
-    GENERATION_CONFIG = genai.types.GenerationConfig(temperature=TEMPERATURE)
 
     @classmethod
     def set_client(cls):

@@ -32,6 +32,7 @@ def get_standardize_merchants_query(chunk):
 
 def get_categories_query(chunk):
     query = (f'possible expenses categories: {",".join(st.session_state.categories)} .\n'
-             f'add the missing categories to table based on merchant, and average amount spend/gained. ' 
-             f'If you are not 90% sure,leave empty. Answer only with the table. no explanation: \n\n{chunk}')
+             f'add the missing categories to table based on merchant and the average amount spend/gained. ' 
+             f'If you are not 90% sure,leave empty. Answer only with the table with {len(chunk.split('\n'))-2} rows. '
+             f'no explanation: \n\n{chunk}')
     return query

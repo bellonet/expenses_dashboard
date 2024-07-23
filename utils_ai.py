@@ -1,13 +1,14 @@
 from settings import OpenAIConfig, GenAIConfig
+import google.generativeai as genai
 from constants import Globals
 import re
 
 
-def query_ai(query, config, client):
+def query_ai(query, config, client, max_tokens=None):
     if config is OpenAIConfig:
         return query_chatgpt(query, client)
     elif config is GenAIConfig:
-        return query_genai(query, config)
+        return query_genai(query, config, max_tokens)
     else:
         raise ValueError("Invalid AI client.")
 
@@ -27,8 +28,12 @@ def query_chatgpt(query, client):
     return response
 
 
-def query_genai(query, config):
-    response = config.MODEL.generate_content(query, generation_config=GenAIConfig.GENERATION_CONFIG).text
+def query_genai(query, config, max_tokens):
+
+    generation_config = genai.types.GenerationConfig(temperature=GenAIConfig.TEMPERATURE,
+                                                     max_output_tokens=max_tokens)
+
+    response = config.MODEL.generate_content(query, generation_config=generation_config).text
     response = re.sub(r"(\w)'(\w)", r"\1\2", response)
 
     if Globals.DEBUG:

@@ -24,17 +24,15 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-- Add checks that dataframe column in correct format.
-- Add rows to categories functionality.
+- Improve llm query/results for categories.
 - If user doesn't provide enough categories - make sure llm doesn't invent new ones.
 - Add checks that api responses match table size (and maybe loop).
-- Test if works - Avoid long api call of standardize merchant name if merchant name is not new.
 - Improve user messages/instructions/workflow.
 - Create functionality of category edits - add and delete.
-- Save categories json function?
 - Add per category - merchant as hue plot.
 - Add list of merchants per category.
 - Add number of transactions per category plot.
+- Save categories json function?
 - Set up a streamlit server.
 - genAI - set quotas.
 - Test Claude / Llama / Mistral API calls and pricing.
