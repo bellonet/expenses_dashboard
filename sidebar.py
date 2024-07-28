@@ -2,10 +2,13 @@ import streamlit as st
 import pandas as pd
 import utils_html
 import utils
+from constants import ColumnNames
 
 
 def apply_date_filter(df):
-    return filter_df_by_date_range(df)
+    df = filter_df_by_date_range(df)
+    df = df.sort_values(by=ColumnNames.DATE)
+    return df
 
 
 def filter_df_by_date_range(df):

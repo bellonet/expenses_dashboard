@@ -1,14 +1,11 @@
 import streamlit as st
 import pandas as pd
-import plots
 import utils
 import preprocess_df
 from preprocess_merchants_categories import add_merchants_and_categories
-import utils_df
 import utils_io
 import sidebar
-from constants import ColumnNames
-from plots import plot_pie_chart, plot_bar_chart
+import display_data
 from settings import set_logger, set_st, set_footer, get_ai_config
 
 
@@ -59,7 +56,7 @@ if not df.empty and 'categories' in st.session_state:
 
     date_filtered_df = sidebar.apply_date_filter(df)
     if not date_filtered_df.empty:
-        display_data.
+        display_data.display_filtered_df(df, date_filtered_df)
     else:
         st.write("No valid data to display.")
 
