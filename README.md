@@ -24,6 +24,7 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
+- Fix - user table edits should be saved.
 - Improve llm query/results for categories.
 - If user doesn't provide enough categories - make sure llm doesn't invent new ones.
 - Add checks that api responses match table size (and maybe loop).

@@ -9,25 +9,6 @@ import display_data
 from settings import set_logger, set_st, set_footer, get_ai_config
 
 
-# def display_data(df):
-#     st.dataframe(df)
-#     utils_io.save_df_to_csv(df)
-#     df = utils.invert_amounts(df, ColumnNames.AMOUNT)
-#     plots.display_summary_metrics(df)
-#
-#     category_color_map = plots.generate_color_map(df, ColumnNames.CATEGORY)
-#
-#     df_grouped = df.groupby(ColumnNames.CATEGORY)[ColumnNames.AMOUNT].sum().reset_index()
-#
-#     if not df_grouped.empty:
-#         plot_pie_chart(df_grouped, category_color_map)
-#
-#         monthly_expenses = utils_df.get_monthly_expense_df(df, df_grouped)
-#         plot_bar_chart(monthly_expenses, category_color_map)
-#     else:
-#         st.write("No valid data to plot.")
-
-
 logger = set_logger()
 ai_config = get_ai_config("genai")
 ai_client = ai_config.set_client()
@@ -51,20 +32,17 @@ utils.add_categories_to_session_state(df)
 #
 if not df.empty and 'categories' in st.session_state:
     df, merchants_summary_df = add_merchants_and_categories(df, ai_config, ai_client)
-
+    # df = utils_df.delete_rows(df, to_del_substr_l)
     st.write("You can edit your table here:")
 
     date_filtered_df = sidebar.apply_date_filter(df)
     if not date_filtered_df.empty:
+        selected_categories, categories = sidebar.manage_sidebar_categories(df)
+        df = sidebar.apply_category_filter(date_filtered_df, selected_categories)
         display_data.display_filtered_df(df, date_filtered_df)
+
+        display_data.display_data(df)
     else:
         st.write("No valid data to display.")
 
-#     #         selected_categories, categories_dict = manage_sidebar_categories(categories_dict)
-#     #         df = utils_df.apply_category_filter(date_filtered_df, selected_categories)
-#     #         df = utils_df.delete_rows(df, to_del_substr_l)
-#     #
-#     # if not df.empty:
-#     #     display_data(df)
-#     #
-#     set_footer()
+    set_footer()

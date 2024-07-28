@@ -37,7 +37,8 @@ def apply_category_filter(df, selected_categories):
     return df
 
 
-def manage_sidebar_categories(categories_dict):
+def manage_sidebar_categories(df):
+    categories = df[ColumnNames.CATEGORY].unique().tolist()
     st.markdown(utils_html.custom_css_sidebar(), unsafe_allow_html=True)
     st.sidebar.header("Categories")
     selected_categories = {}
@@ -45,16 +46,16 @@ def manage_sidebar_categories(categories_dict):
     # Buttons for Select All and Unselect All
     col_btn1, col_btn2 = st.sidebar.columns([1, 1])
     if col_btn1.button('Select All'):
-        for category in categories_dict.keys():
+        for category in categories:
             st.session_state[f'checkbox_{category}'] = True
         st.experimental_rerun()
     if col_btn2.button('None'):
-        for category in categories_dict.keys():
+        for category in categories:
             st.session_state[f'checkbox_{category}'] = False
         st.experimental_rerun()
 
     # Display categories with checkboxes and trash icons
-    for category in categories_dict.keys():
+    for category in categories:
         col1, col2 = st.sidebar.columns([1, 10])
 
         # HTML for trash icon
@@ -70,12 +71,12 @@ def manage_sidebar_categories(categories_dict):
                                                       value=st.session_state[f'checkbox_{category}'],
                                                       key=f'checkbox_{category}')
 
-    new_category = st.sidebar.text_input("Add new category")
-    if st.sidebar.button("Add Category"):
-        sorted_categories = utils.add_new_category(categories_dict, new_category)
-        if sorted_categories != categories_dict:
-            categories_dict = sorted_categories
-            st.sidebar.success(f"Category '{new_category}' added.")
-            st.experimental_rerun()
+    # new_category = st.sidebar.text_input("Add new category")
+    # if st.sidebar.button("Add Category"):
+    #     sorted_categories = utils.add_new_category(categories_dict, new_category)
+    #     if sorted_categories != categories_dict:
+    #         categories_dict = sorted_categories
+    #         st.sidebar.success(f"Category '{new_category}' added.")
+    #         st.experimental_rerun()
 
-    return selected_categories, categories_dict
+    return selected_categories, categories

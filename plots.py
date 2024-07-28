@@ -1,7 +1,7 @@
 import plotly.express as px
 import streamlit as st
 from constants import ColumnNames
-import utils_df
+import sidebar
 from constants import PlotSettings
 
 
@@ -14,7 +14,7 @@ def display_summary_metrics(df):
     # Calculate the total expenses
     total_expenses = df[ColumnNames.AMOUNT].sum()
 
-    min_date, max_date = utils_df.get_min_max_date(df)
+    min_date, max_date = sidebar.get_min_max_date(df)
 
     num_months = (max_date.year - min_date.year) * 12 + max_date.month - min_date.month + 1
     num_days = (max_date - min_date).days + 1
