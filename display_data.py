@@ -17,6 +17,17 @@ def display_data(df):
     category_color_map = plots.generate_color_map(df, ColumnNames.CATEGORY)
 
     df_grouped = df.groupby(ColumnNames.CATEGORY)[ColumnNames.AMOUNT].sum().reset_index()
+    # if df_grouped has negative values - st write warning and delete those from the df:
+
+    print(df_grouped.amount.to_list())
+    print(df_grouped.category.to_list())
+
+    if df_grouped[ColumnNames.AMOUNT].lt(0).any():
+        st.write("Warning: Negative values detected in the data. Removing those values.")
+        df_grouped = df_grouped[df_grouped[ColumnNames.AMOUNT] >= 0]
+
+    print(df_grouped.amount.to_list())
+    print(df_grouped.category.to_list())
 
     if not df_grouped.empty:
         plots.plot_pie_chart(df_grouped, category_color_map)
