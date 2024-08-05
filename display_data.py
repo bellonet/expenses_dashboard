@@ -7,7 +7,9 @@ from constants import ColumnNames
 
 
 def display_data(df):
-    st.dataframe(df)
+    # st.dataframe(df)
+    display_filtered_df(df)
+
     utils_io.save_df_to_csv(df)
     df = utils.invert_amounts(df, ColumnNames.AMOUNT)
     plots.display_summary_metrics(df)
@@ -25,7 +27,7 @@ def display_data(df):
         st.write("No valid data to plot.")
 
 
-def display_filtered_df(df, date_filtered_df):
-    date_filtered_df = st.data_editor(date_filtered_df)
-    df.loc[date_filtered_df.index] = date_filtered_df
+def display_filtered_df(df):
+    date_filtered_df = st.data_editor(df)
+    df.loc[date_filtered_df.index] = df
     return df
