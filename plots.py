@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from constants import ColumnNames
 import sidebar
@@ -120,4 +121,23 @@ def plot_bar_chart(monthly_expenses, category_color_map):
 
         )
 
+    st.plotly_chart(fig)
+
+
+def plot_sunburst_merchants_and_categories(df, category_color_map):
+    grouped_df = df.groupby(['category', 'merchant'], as_index=False).sum()
+
+    # Creating the sunburst chart
+    fig = px.sunburst(
+        grouped_df,
+        path=['category', 'merchant'],
+        values='amount',
+        color='category',
+        color_discrete_map=category_color_map,
+        width=1000,
+        height=1000,
+        branchvalues='total'
+    )
+
+    fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
     st.plotly_chart(fig)
