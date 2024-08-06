@@ -40,7 +40,7 @@ if not df.empty and 'categories' in st.session_state:
         selected_categories, categories = sidebar.manage_sidebar_categories(df)
         date_and_categories_filtered_df = sidebar.apply_category_filter(date_filtered_df, selected_categories)
 
-        display_data.display_data(date_and_categories_filtered_df)
+        display_data.display_data(date_and_categories_filtered_df, df)
     else:
         st.write("No valid data to display.")
 

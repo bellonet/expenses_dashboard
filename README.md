@@ -24,16 +24,18 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
-- Fix - user table edits should be saved.
 - Improve llm query/results for categories.
 - If user doesn't provide enough categories - make sure llm doesn't invent new ones.
-- Add checks that api responses match table size (and maybe loop).
-- Improve user messages/instructions/workflow.
 - Create functionality of category edits - add and delete.
-- Add per category - merchant as hue plot.
+- Improve user messages/instructions/workflow.
+- Add checks that api responses match table size (and maybe loop).
+- per month merchant plot.
 - Add list of merchants per category.
 - Add number of transactions per category plot.
 - Save categories json function?
+- Encoding csv problem
+- Allow for row addition to the table (e.g. for cash transactions).
+- Delete duplicated rows from multiple csvs.
 - Set up a streamlit server.
 - genAI - set quotas.
 - Test Claude / Llama / Mistral API calls and pricing.
