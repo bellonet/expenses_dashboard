@@ -24,6 +24,7 @@ and visualize expenses through interactive pie and bar charts.
 This project is licensed under the MIT License. 
 
 ## To Do
+- test max token needs for flash2.5
 - Improve llm query/results for categories.
 - If user doesn't provide enough categories - make sure llm doesn't invent new ones.
 - Create functionality of category edits - add and delete.

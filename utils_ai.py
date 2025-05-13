@@ -30,8 +30,8 @@ def query_chatgpt(query, client):
 
 def query_genai(query, config, max_tokens):
 
-    generation_config = genai.types.GenerationConfig(temperature=GenAIConfig.TEMPERATURE,
-                                                     max_output_tokens=max_tokens)
+    generation_config = (genai.types.GenerationConfig(temperature=GenAIConfig.TEMPERATURE))
+                         # , max_output_tokens=max_tokens)
 
     response = config.MODEL.generate_content(query, generation_config=generation_config).text
     response = re.sub(r"(\w)'(\w)", r"\1\2", response)

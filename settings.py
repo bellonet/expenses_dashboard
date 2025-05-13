@@ -54,7 +54,7 @@ class OpenAIConfig:
 
 
 class GenAIConfig:
-    MODEL = genai.GenerativeModel("gemini-1.5-flash")
+    MODEL = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
     CHUNK_SIZE = 40
 
     if Globals.DEBUG:
