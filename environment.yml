@@ -1,0 +1,16 @@
+name: expenses-calc
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pandas
+  - pip=24
+  - plotly
+  - python=3.12
+  - pip:
+    - google-genai==1.15.0
+    - openai==1.35.8
+    - pyarrow==16.1.0
+    - streamlit==1.36.0
+
+prefix: "/home/ella/micromamba/envs/expenses-calc"
